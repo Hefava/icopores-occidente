@@ -1,0 +1,1513 @@
+<meta charset="utf-8">
+<style>
+/* ============ RESET ============ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none}
+a{color:inherit;text-decoration:none}
+ul{list-style:none}
+img,svg{display:block}
+
+/* ============ TOKENS ============ */
+:root{
+  --foam:#F1F3EC; --surface:#FFFFFF; --sunken:#E9ECE3; --sunken-2:#F6F7F2;
+  --ink:#14171A; --ink-2:#444B52; --muted:#79828B; --faint:#AAB1B7;
+  --line:#E0E3DB; --line-2:#EDEFE9;
+  --brand:#0B5D66; --brand-2:#083F46; --brand-tint:#E4F0F0; --brand-bright:#3FB6C1;
+  --accent:#DE8A1C; --accent-tint:#FBEFDA;
+  --ok:#2F7A57; --ok-tint:#E3F1E9;
+  --info:#3557B7; --info-tint:#E6EAF6;
+  --warn:#C0791A; --warn-tint:#FBEED9;
+  --danger:#C23B26; --danger-tint:#F8E4DF;
+  --crit:#9E1B1B;
+  --bezel:#111417; --bezel-2:#181C20; --bezel-line:#2A3037; --bezel-text:#C7CDD2; --bezel-faint:#6B747C;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Monaco,"Cascadia Mono","Roboto Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --r:10px; --r-sm:7px; --r-lg:16px;
+  --sh:0 1px 2px rgba(16,20,24,.05),0 4px 16px rgba(16,20,24,.05);
+  --sh-lg:0 8px 40px rgba(16,20,24,.16);
+  --sb:248px;
+}
+/* ============ BASE ============ */
+body{font-family:var(--sans);background:var(--foam);color:var(--ink);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
+h1,h2,h3,h4{line-height:1.15;letter-spacing:-.02em;font-weight:650}
+
+/* ============ LOGIN ============ */
+#login{position:fixed;inset:0;z-index:100;display:grid;grid-template-columns:1.05fr .95fr;background:var(--bezel)}
+#login.hide{display:none}
+.login-brandside{position:relative;overflow:hidden;padding:48px;display:flex;flex-direction:column;justify-content:space-between;
+  background:radial-gradient(circle at 1px 1px,rgba(255,255,255,.05) 1.4px,transparent 0) 0 0/16px 16px,
+  linear-gradient(155deg,#0d3d43,#111417 60%)}
+.login-brandside::after{content:"";position:absolute;right:-120px;bottom:-120px;width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,rgba(63,182,193,.25),transparent 60%)}
+.login-lead{max-width:400px;position:relative;z-index:1}
+.login-lead h2{color:#fff;font-size:34px;line-height:1.08;margin:22px 0 14px;letter-spacing:-.03em}
+.login-lead p{color:var(--bezel-text);font-size:15px}
+.login-readout{position:relative;z-index:1;display:flex;gap:10px;flex-wrap:wrap}
+.lr-chip{border:1px solid var(--bezel-line);border-radius:var(--r);padding:10px 14px;min-width:96px;background:rgba(255,255,255,.02)}
+.lr-chip .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--bezel-faint)}
+.lr-chip .v{font-family:var(--mono);font-size:20px;color:#fff;margin-top:3px;font-variant-numeric:tabular-nums}
+.lr-chip .v.red{color:#ff7a63}
+.login-formside{background:var(--foam);display:flex;align-items:center;justify-content:center;padding:40px}
+.login-card{width:100%;max-width:360px}
+.login-card h1{font-size:24px;margin-bottom:6px}
+.login-card>p{color:var(--muted);margin-bottom:28px}
+.demo-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--brand);background:var(--brand-tint);border:1px solid #cfe4e4;padding:4px 9px;border-radius:20px}
+
+/* ============ APP SHELL ============ */
+#app{display:none;min-height:100vh;grid-template-columns:var(--sb) 1fr}
+#app.show{display:grid}
+/* sidebar */
+.sb{position:sticky;top:0;height:100vh;background:var(--bezel);color:var(--bezel-text);display:flex;flex-direction:column;
+  border-right:1px solid var(--bezel-line);
+  background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.035) 1.3px,transparent 0);background-size:15px 15px}
+.sb-head{padding:20px 18px 16px;display:flex;align-items:center;gap:11px}
+.logo{width:34px;height:34px;flex:none}
+.sb-name{font-weight:700;font-size:14.5px;color:#fff;letter-spacing:-.01em;line-height:1.05}
+.sb-name span{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;color:var(--brand-bright);font-weight:500;margin-top:2px}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 12px 18px}
+.sb-sect{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bezel-faint);
+  padding:16px 10px 7px}
+.nav-i{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-sm);color:var(--bezel-text);
+  font-size:13.5px;font-weight:500;position:relative;transition:background .12s,color .12s}
+.nav-i:hover{background:var(--bezel-2);color:#fff}
+.nav-i.active{background:linear-gradient(90deg,rgba(63,182,193,.16),rgba(63,182,193,.02));color:#fff}
+.nav-i.active::before{content:"";position:absolute;left:-12px;top:6px;bottom:6px;width:3px;background:var(--brand-bright);border-radius:0 3px 3px 0}
+.nav-i svg{width:18px;height:18px;flex:none;opacity:.9}
+.nav-i .badge{margin-left:auto;background:var(--danger);color:#fff;font-family:var(--mono);font-size:10px;
+  min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+.sb-foot{border-top:1px solid var(--bezel-line);padding:12px}
+.roleswitch{background:var(--bezel-2);border:1px solid var(--bezel-line);border-radius:var(--r-sm);padding:8px 9px}
+.roleswitch .k{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--bezel-faint);margin-bottom:6px}
+.rs-btns{display:flex;gap:4px}
+.rs-btns button{flex:1;font-family:var(--mono);font-size:11px;padding:6px 0;border-radius:5px;color:var(--bezel-faint);
+  border:1px solid transparent}
+.rs-btns button.on{background:var(--brand);color:#fff}
+.rs-btns button:not(.on):hover{color:#fff;background:var(--bezel-line)}
+
+/* main */
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(241,243,236,.82);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);padding:12px 26px;display:flex;align-items:center;gap:18px}
+.hamb{display:none}
+.tb-title{min-width:0}
+.tb-title .eyebrow{display:block}
+.tb-title h1{font-size:19px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* readout (signature) */
+.readout{margin-left:auto;display:flex;align-items:stretch;background:var(--bezel);border-radius:var(--r);overflow:hidden;
+  box-shadow:inset 0 0 0 1px var(--bezel-line)}
+.ro-seg{padding:7px 15px;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--bezel-line);min-width:82px}
+.ro-seg:last-child{border-right:none}
+.ro-seg .k{font-family:var(--mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--bezel-faint);
+  display:flex;align-items:center;gap:5px}
+.ro-seg .v{font-family:var(--mono);font-size:17px;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ro-seg.alert .v{color:#ff7a63}
+.led{width:7px;height:7px;border-radius:50%;background:var(--bezel-faint)}
+.led.on{background:#ff5a3d;box-shadow:0 0 0 0 rgba(255,90,61,.6);animation:pulse 1.8s infinite}
+.led.green{background:var(--brand-bright)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,90,61,.55)}70%{box-shadow:0 0 0 7px rgba(255,90,61,0)}100%{box-shadow:0 0 0 0 rgba(255,90,61,0)}}
+.tb-user{display:flex;align-items:center;gap:9px;padding-left:6px}
+.avatar{width:34px;height:34px;border-radius:9px;background:var(--brand);color:#fff;display:grid;place-items:center;
+  font-family:var(--mono);font-weight:600;font-size:13px;flex:none}
+.tb-user .nm{font-size:12.5px;font-weight:600;line-height:1.2}
+.tb-user .rl{font-family:var(--mono);font-size:10px;color:var(--muted)}
+
+.view{padding:26px;max-width:1320px;width:100%}
+
+/* ============ COMPONENTS ============ */
+.grid{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.card-pad{padding:18px}
+.card-h{display:flex;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line-2)}
+.card-h h3{font-size:14.5px}
+.card-h .sub{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* stat tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;position:relative;overflow:hidden}
+.tile .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;gap:6px;align-items:center}
+.tile .v{font-family:var(--mono);font-size:30px;font-variant-numeric:tabular-nums;margin-top:8px;letter-spacing:-.02em;line-height:1}
+.tile .u{font-size:13px;color:var(--faint);font-family:var(--mono)}
+.tile .d{font-size:12px;color:var(--muted);margin-top:7px}
+.tile .spark{margin-top:6px}
+.tile.accent{border-left:3px solid var(--brand)}
+.tile.warn-t{background:linear-gradient(180deg,var(--danger-tint),var(--surface));border-color:#eecabf}
+.tile.warn-t .v{color:var(--danger)}
+.tile.ok-t .v{color:var(--ok)}
+.trend{font-family:var(--mono);font-size:11px;padding:2px 6px;border-radius:5px}
+.trend.up{color:var(--ok);background:var(--ok-tint)}
+.trend.down{color:var(--danger);background:var(--danger-tint)}
+
+/* pills */
+.pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10.5px;letter-spacing:.02em;
+  padding:3px 9px;border-radius:20px;font-weight:500;white-space:nowrap;border:1px solid transparent;text-transform:uppercase}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{color:var(--ok);background:var(--ok-tint)} .pill.info{color:var(--info);background:var(--info-tint)}
+.pill.warn{color:var(--warn);background:var(--warn-tint)} .pill.danger{color:var(--danger);background:var(--danger-tint)}
+.pill.crit{color:#fff;background:var(--crit)} .pill.mut{color:var(--ink-2);background:var(--sunken)}
+.pill.brand{color:var(--brand);background:var(--brand-tint)} .pill.accent{color:var(--warn);background:var(--accent-tint)}
+.tag-inv{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:5px}
+.tag-inv.n{color:var(--ink-2);background:var(--sunken);border:1px solid var(--line)}
+.tag-inv.i{color:var(--warn);background:var(--accent-tint);border:1px solid #eeddba}
+
+/* tables */
+.tw{overflow-x:auto;border-radius:var(--r)}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+.tbl th{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);font-weight:500;white-space:nowrap;background:var(--sunken-2)}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr{transition:background .1s}
+.tbl tbody tr:hover{background:var(--sunken-2)}
+.tbl .num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.tbl .neg{color:var(--danger)}
+.tbl .rowlink{cursor:pointer}
+.prod-cell{display:flex;flex-direction:column;gap:1px}
+.prod-cell .sku{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.prod-cell strong{font-weight:600;font-size:13px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:var(--r-sm);font-size:13px;font-weight:600;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);transition:.12s;white-space:nowrap}
+.btn:hover{background:var(--sunken-2);border-color:var(--line)}
+.btn svg{width:15px;height:15px}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn.primary:hover{background:var(--brand-2)}
+.btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn.danger:hover{filter:brightness(.93)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--sunken)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn.block{width:100%;justify-content:center}
+.btn:focus-visible,.nav-i:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.rowlink:focus-visible{
+  outline:2px solid var(--brand-bright);outline-offset:2px}
+
+/* toolbar / filters */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:8px 12px;min-width:220px;flex:1;max-width:340px}
+.search svg{width:16px;height:16px;color:var(--muted);flex:none}
+.search input{border:none;width:100%;background:none;outline:none}
+.chipset{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:11.5px;padding:6px 11px;border-radius:20px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink-2)}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip:not(.on):hover{border-color:var(--muted)}
+.spacer{flex:1}
+
+/* forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.field label .req{color:var(--danger)}
+.field .hint{font-size:11.5px;color:var(--muted)}
+.inp{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:9px 12px;font-size:14px;width:100%;outline:none;transition:border .12s}
+.inp:focus{border-color:var(--brand)}
+select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2379828B' stroke-width='2.4'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea.inp{resize:vertical;min-height:72px}
+.inp.mono{font-family:var(--mono)}
+
+/* section headings */
+.sec-h{display:flex;align-items:center;gap:10px;margin:26px 0 13px}
+.sec-h h2{font-size:16px}
+.sec-h .line{flex:1;height:1px;background:var(--line)}
+
+/* movement list (reflow, cards on mobile) */
+.mv-list{display:flex;flex-direction:column;gap:8px}
+.mv{display:grid;grid-template-columns:40px 1fr auto auto auto;gap:14px;align-items:center;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;transition:.1s}
+.mv:hover{box-shadow:var(--sh);border-color:var(--line)}
+.mv-ico{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;flex:none}
+.mv-ico svg{width:19px;height:19px}
+.mv-ico.in{background:var(--ok-tint);color:var(--ok)} .mv-ico.out{background:var(--danger-tint);color:var(--danger)}
+.mv-ico.adj{background:var(--accent-tint);color:var(--warn)}
+.mv-main .t{font-weight:600;font-size:13.5px}
+.mv-main .s{font-size:12px;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mv-delta{font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums;text-align:right}
+.mv-delta.in{color:var(--ok)} .mv-delta.out{color:var(--danger)} .mv-delta.adj{color:var(--warn)}
+.mv-ba{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.mv-when{font-family:var(--mono);font-size:11.5px;color:var(--muted);text-align:right;white-space:nowrap}
+
+/* progress / coverage bar */
+.cov{height:8px;border-radius:6px;background:var(--sunken);overflow:hidden;display:flex}
+.cov i{display:block;height:100%}
+.cov i.f{background:var(--ok)} .cov i.p{background:var(--warn)} .cov i.m{background:var(--danger)}
+.cov-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.cov-legend span{display:flex;align-items:center;gap:5px}
+.dotm{width:8px;height:8px;border-radius:2px;display:inline-block}
+
+/* alerts */
+.alert-row{display:grid;grid-template-columns:4px 1fr auto;gap:14px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);overflow:hidden;transition:.1s}
+.alert-row:hover{box-shadow:var(--sh)}
+.alert-bar{width:4px}
+.alert-bar.crit{background:var(--crit)} .alert-bar.imp{background:var(--danger)}
+.alert-bar.prev{background:var(--warn)} .alert-bar.info{background:var(--info)}
+.alert-body{padding:14px 4px 14px 0;min-width:0}
+.alert-body .t{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.alert-body .m{font-size:12.5px;color:var(--ink-2);margin-top:4px}
+.alert-body .meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.alert-side{padding:14px 16px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;justify-content:center;
+  border-left:1px solid var(--line-2)}
+.days{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums;line-height:1}
+.days.neg{color:var(--danger)} .days .u{font-size:10px;color:var(--muted);display:block;text-align:right}
+
+/* modal + drawer */
+.overlay{position:fixed;inset:0;z-index:60;background:rgba(16,20,24,.42);backdrop-filter:blur(2px);display:none;
+  align-items:center;justify-content:center;padding:20px}
+.overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:var(--r-lg);width:100%;max-width:460px;box-shadow:var(--sh-lg);overflow:hidden;
+  animation:pop .16s ease-out}
+.modal.wide{max-width:720px}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
+.modal-h{padding:18px 20px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:12px}
+.modal-h h3{font-size:16px}
+.modal-b{padding:20px}
+.modal-f{padding:14px 20px;border-top:1px solid var(--line-2);display:flex;gap:10px;justify-content:flex-end;background:var(--sunken-2)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:var(--surface);z-index:61;box-shadow:var(--sh-lg);
+  transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+.drawer.show{transform:none}
+.drawer-h{padding:18px 20px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:12px}
+.drawer-b{padding:20px;overflow-y:auto;flex:1}
+.iconbtn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+.iconbtn:hover{background:var(--sunken);color:var(--ink)}
+.iconbtn svg{width:18px;height:18px}
+
+/* key-value list */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:10px 18px;font-size:13px}
+.kv dt{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.kv dd{text-align:right;font-weight:500}
+.kv dd.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* diff (audit / order edit) */
+.diff{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;font-family:var(--mono);font-size:12px}
+.diff .old{background:var(--danger-tint);color:var(--danger);padding:3px 8px;border-radius:5px;text-decoration:line-through;text-align:right}
+.diff .new{background:var(--ok-tint);color:var(--ok);padding:3px 8px;border-radius:5px}
+.diff .arr{color:var(--muted)}
+
+/* empty state */
+.empty{text-align:center;padding:56px 20px;color:var(--muted)}
+.empty .ic{width:56px;height:56px;border-radius:14px;background:var(--sunken);display:grid;place-items:center;margin:0 auto 16px;color:var(--faint)}
+.empty h3{color:var(--ink);font-size:16px;margin-bottom:6px}
+.empty p{max-width:340px;margin:0 auto 18px}
+
+/* reports tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;overflow-x:auto}
+.tab{padding:10px 15px;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+.tab:hover:not(.on){color:var(--ink)}
+
+/* mini bar chart */
+.bars{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:10px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%}
+.bar-stack{width:100%;max-width:44px;flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.bar-n{background:var(--brand);border-radius:4px 4px 0 0}
+.bar-i{background:var(--accent);border-radius:4px 4px 0 0}
+.bar-lbl{font-family:var(--mono);font-size:10px;color:var(--muted)}
+
+.hide-m{display:initial}
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+
+/* ============ RESPONSIVE base (v2: mobile driven by #app.is-mobile) ============ */
+@media(max-width:1080px){ .two-col{grid-template-columns:1fr} }
+@media(max-width:860px){ #login{grid-template-columns:1fr} .login-brandside{display:none} }
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#app{position:relative}
+.scrim{position:fixed;inset:0;background:rgba(16,20,24,.4);z-index:65;display:none}
+.scrim.show{display:block}
+</style>
+
+<style>
+/* ==================================================================
+   V2 · MOBILE LAYER  —  activates when #app has .is-mobile
+   (set by JS from #app real width; works on real phones AND inside
+   the on-screen phone-frame preview toggle). Laptop = untouched.
+   ================================================================== */
+
+/* --- device preview toggle (demo utility) --- */
+#devtoggle{position:fixed;bottom:16px;right:16px;z-index:130;display:flex;gap:2px;background:var(--bezel);
+  border:1px solid var(--bezel-line);border-radius:11px;padding:3px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#devtoggle button{font-family:var(--sans);font-weight:600;font-size:12px;color:var(--bezel-faint);padding:8px 13px;
+  border-radius:8px;display:flex;align-items:center;gap:7px}
+#devtoggle button svg{width:15px;height:15px}
+#devtoggle button.on{background:var(--brand);color:#fff}
+body.dev-mobile{background:#0b0d0f}
+body.dev-mobile #app.show{width:404px;height:850px;margin:26px auto;border:13px solid #202327;border-radius:48px;
+  overflow:hidden;box-shadow:0 40px 90px rgba(0,0,0,.55)}
+body.dev-mobile #login{max-width:404px;height:850px;margin:26px auto;border:13px solid #202327;border-radius:48px;overflow:hidden;grid-template-columns:1fr}
+body.dev-mobile #login .login-brandside{display:none}
+
+/* --- app becomes a phone shell --- */
+#app.is-mobile{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+body.dev-mobile #app.is-mobile.show{height:850px}
+#app.is-mobile .main{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+#app.is-mobile .view{padding:14px 14px 24px;max-width:none}
+
+/* sidebar → slide-in drawer inside the app frame */
+#app.is-mobile .sb{position:absolute;z-index:90;left:0;top:0;bottom:0;height:auto;width:84%;max-width:300px;
+  transform:translateX(-100%);transition:transform .24s cubic-bezier(.4,0,.2,1)}
+#app.is-mobile .sb.open{transform:none;box-shadow:var(--sh-lg)}
+#app.is-mobile .scrim{position:absolute;z-index:89}
+
+/* header compact */
+#app.is-mobile .topbar{padding:10px 14px;gap:10px;position:sticky;top:0}
+#app.is-mobile .hamb{display:none}
+#app.is-mobile .tb-title h1{font-size:16.5px;max-width:60vw}
+#app.is-mobile .tb-title .eyebrow{font-size:9px}
+#app.is-mobile .readout{display:none}
+#app.is-mobile .tb-user .hide-m{display:none}
+#app.is-mobile .avatar{width:34px;height:34px}
+
+/* sticky mobile readout strip (numbers-first) */
+.mreadout{display:none}
+#app.is-mobile .mreadout{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bezel-line);
+  position:sticky;top:54px;z-index:15}
+.mreadout .seg{background:var(--bezel);padding:7px 6px;text-align:center}
+.mreadout .seg .k{font-family:var(--mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--bezel-faint)}
+.mreadout .seg .v{font-family:var(--mono);font-size:15px;color:#fff;margin-top:2px;font-variant-numeric:tabular-nums}
+.mreadout .seg.alert .v{color:#ff7a63}
+
+/* bottom navigation */
+.botnav{display:none}
+#app.is-mobile .botnav{display:flex;align-items:stretch;background:var(--bezel);border-top:1px solid var(--bezel-line);
+  flex:none;position:relative;z-index:40;padding-bottom:env(safe-area-inset-bottom,0)}
+.botnav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 0;
+  color:var(--bezel-faint);position:relative;min-height:58px}
+.botnav a .lb{font-size:10px;font-weight:600;letter-spacing:.01em}
+.botnav a svg{width:22px;height:22px}
+.botnav a.active{color:#fff}
+.botnav a.active::before{content:"";position:absolute;top:0;left:24%;right:24%;height:2.5px;background:var(--brand-bright);border-radius:0 0 3px 3px}
+.botnav a .bdg{position:absolute;top:5px;left:calc(50% + 6px);background:var(--danger);color:#fff;font-family:var(--mono);
+  font-size:9px;min-width:15px;height:15px;border-radius:8px;display:grid;place-items:center;padding:0 3px}
+.botnav .fabslot{flex:1;display:flex;align-items:center;justify-content:center}
+.botnav .fab{width:58px;height:58px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;
+  box-shadow:0 6px 20px rgba(11,93,102,.55);margin-top:-24px;border:4px solid var(--bezel)}
+.botnav .fab svg{width:27px;height:27px}
+
+/* reflow of shared components */
+#app.is-mobile .two-col{grid-template-columns:1fr;gap:12px}
+#app.is-mobile .tiles{grid-template-columns:1fr 1fr;gap:10px}
+#app.is-mobile .tile{padding:14px}#app.is-mobile .tile .v{font-size:23px}
+#app.is-mobile .toolbar{gap:8px;margin-bottom:12px}
+#app.is-mobile .search{max-width:none;min-width:0;flex:1 1 100%}
+#app.is-mobile .chipset{flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch}
+#app.is-mobile .chip{white-space:nowrap;padding:9px 14px;font-size:12.5px}
+#app.is-mobile .btn{min-height:46px;font-size:14px}
+#app.is-mobile .card-pad{padding:15px}
+#app.is-mobile .sec-h{margin:20px 0 11px}
+#app.is-mobile .bars{height:120px}
+
+/* movement rows + alerts (were media-based before) */
+#app.is-mobile .mv{grid-template-columns:38px 1fr auto;grid-template-areas:"i m d" "i s s";row-gap:4px}
+#app.is-mobile .mv-ico{grid-area:i}#app.is-mobile .mv-main{grid-area:m}#app.is-mobile .mv-delta{grid-area:d}
+#app.is-mobile .mv-ba{grid-area:s;text-align:left}#app.is-mobile .mv-when{display:none}
+#app.is-mobile .alert-row{grid-template-columns:4px 1fr}
+#app.is-mobile .alert-side{grid-column:2;flex-direction:row;align-items:center;border-left:none;border-top:1px solid var(--line-2)}
+
+/* generic table → stacked cards (all admin/consulta tables) */
+#app.is-mobile .tw{overflow:visible}
+#app.is-mobile table.tbl{min-width:0;display:block}
+#app.is-mobile .tbl thead{display:none}
+#app.is-mobile .tbl tbody{display:block}
+#app.is-mobile .tbl tr{display:block;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;margin-bottom:10px;box-shadow:var(--sh)}
+#app.is-mobile .tbl td{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:5px 0;border:none;text-align:right}
+#app.is-mobile .tbl td::before{content:attr(data-l);font-family:var(--mono);font-size:10px;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--muted);text-align:left;flex:none}
+#app.is-mobile .tbl td:first-child{border-bottom:1px solid var(--line-2);padding-bottom:9px;margin-bottom:4px;text-align:left}
+#app.is-mobile .tbl td:first-child::before{display:none}
+#app.is-mobile .tbl td.num{justify-content:space-between}
+#app.is-mobile .tbl td:empty{display:none}
+
+/* forms: single column, 16px inputs (no iOS zoom), 46px targets */
+#app.is-mobile .form-grid{grid-template-columns:1fr;gap:14px}
+#app.is-mobile .inp{min-height:46px;font-size:16px}
+#app.is-mobile textarea.inp{min-height:84px}
+#app.is-mobile select.inp{min-height:46px}
+
+/* drawers & modals → bottom sheets inside the frame */
+#app.is-mobile .overlay{position:absolute;align-items:flex-end;padding:0}
+#app.is-mobile .drawer{position:absolute;top:auto;left:0;right:0;bottom:0;width:100%;max-width:none;height:auto;
+  max-height:90%;border-radius:22px 22px 0 0;transform:translateY(100%)}
+#app.is-mobile .drawer.show{transform:none}
+#app.is-mobile .drawer .drawer-h{padding-top:22px}
+#app.is-mobile .drawer .drawer-h::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);
+  width:42px;height:4px;border-radius:2px;background:var(--line)}
+#app.is-mobile .modal{max-width:none;width:100%;border-radius:22px 22px 0 0;animation:sheetUp .24s cubic-bezier(.4,0,.2,1)}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+
+/* ===== operator guided-flow components ===== */
+.bigact{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bigact button{border-radius:20px;padding:20px 16px;color:#fff;text-align:left;min-height:138px;display:flex;
+  flex-direction:column;justify-content:space-between;box-shadow:var(--sh)}
+.bigact button:active{transform:scale(.98)}
+.bigact .load{background:linear-gradient(155deg,#0e6b74,#0a5058)}
+.bigact .outb{background:linear-gradient(155deg,#c9702f,#a1481a)}
+.bigact button .ic{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.16);display:grid;place-items:center}
+.bigact button .ic svg{width:26px;height:26px}
+.bigact button .t{font-size:20px;font-weight:750;margin-top:auto;line-height:1}
+.bigact button .d{font-size:12px;opacity:.85;margin-top:4px}
+
+.stephead{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.stepback{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none}
+.stephead .lbl{font-weight:680;font-size:15px}
+.stephead .lbl span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.stepdots{display:flex;gap:5px;margin-left:auto}
+.stepdots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.stepdots i.on{background:var(--brand)}
+
+.opt-list{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:center;gap:13px;padding:14px;border-radius:14px;border:1px solid var(--line);
+  background:var(--surface);text-align:left;width:100%;min-height:64px;box-shadow:var(--sh)}
+.opt:active{background:var(--sunken-2)}
+.opt .oic{width:44px;height:44px;border-radius:12px;background:var(--brand-tint);color:var(--brand);display:grid;place-items:center;flex:none}
+.opt .oic svg{width:22px;height:22px}
+.opt .nm{font-weight:650;font-size:14.5px}
+.opt .sub{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.opt .ort{margin-left:auto;text-align:right;flex:none}
+.opt .ort .big{font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums}
+
+.bigtoggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 4px}
+.bigtoggle button{padding:16px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);text-align:center;font-weight:680;min-height:64px}
+.bigtoggle button.on{border-color:var(--brand);background:var(--brand-tint);color:var(--brand-2)}
+.bigtoggle button .s{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400;margin-top:3px}
+
+.stepper{display:flex;align-items:center;gap:16px;justify-content:center;margin:22px 0}
+.stepper button{width:66px;height:66px;border-radius:18px;background:var(--surface);border:1.5px solid var(--line);
+  font-size:30px;color:var(--brand);display:grid;place-items:center;font-family:var(--mono)}
+.stepper button:active{background:var(--brand-tint)}
+.stepper .qv{font-family:var(--mono);font-size:46px;font-variant-numeric:tabular-nums;min-width:120px;text-align:center;line-height:1}
+.qchips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.qchips button{font-family:var(--mono);font-size:13px;padding:9px 15px;border-radius:22px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+.qchips button:active{background:var(--brand-tint)}
+
+.flow-sum{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 16px;margin-bottom:16px}
+.sticky-cta{position:sticky;bottom:0;background:linear-gradient(transparent,var(--foam) 30%);padding:16px 0 6px;margin-top:8px}
+.big-primary{width:100%;min-height:54px;border-radius:15px;background:var(--brand);color:#fff;font-weight:700;font-size:16px;
+  display:flex;align-items:center;justify-content:center;gap:9px}
+.big-primary:active{background:var(--brand-2)}
+.big-primary.outb{background:var(--accent)}
+.flow-done{text-align:center;padding:36px 16px}
+.flow-done .chk{width:84px;height:84px;border-radius:50%;background:var(--ok-tint);color:var(--ok);display:grid;place-items:center;margin:0 auto 18px}
+.flow-done .chk svg{width:44px;height:44px}
+.flow-done h2{font-size:23px;margin-bottom:8px}
+</style>
+
+<!-- ================= LOGIN ================= -->
+<div id="login">
+  <div class="login-brandside">
+    <div style="display:flex;align-items:center;gap:12px">
+      <svg class="logo" viewBox="0 0 40 40" fill="none">
+        <rect x="1.5" y="1.5" width="37" height="37" rx="9" fill="#0d3d43" stroke="#2f6a70"/>
+        <g fill="#eef6f6"><circle cx="14" cy="14" r="4.4"/><circle cx="24" cy="12.5" r="3.4"/><circle cx="26.5" cy="22" r="4.4"/><circle cx="15" cy="24.5" r="3.9"/><circle cx="21" cy="19" r="2.6" fill="#3FB6C1"/></g>
+      </svg>
+      <div class="sb-name" style="color:#fff">Icopores Occidente<span>CONTROL DE BODEGA</span></div>
+    </div>
+    <div class="login-lead">
+      <div class="eyebrow" style="color:var(--brand-bright)">Inventario · Reservas · Producción</div>
+      <h2>Cada unidad de espuma, contada y ubicada.</h2>
+      <p>Físico, reservado, disponible y faltante — en un solo tablero, para toda la operación.</p>
+    </div>
+    <div class="login-readout">
+      <div class="lr-chip"><div class="k">Físico</div><div class="v">8.420</div></div>
+      <div class="lr-chip"><div class="k">Reservado</div><div class="v">6.110</div></div>
+      <div class="lr-chip"><div class="k">Disponible</div><div class="v">2.310</div></div>
+      <div class="lr-chip"><div class="k">Faltante</div><div class="v red">640</div></div>
+    </div>
+  </div>
+  <div class="login-formside">
+    <div class="login-card">
+      <span class="demo-tag">● Prototipo demo</span>
+      <h1 style="margin-top:16px">Ingresar</h1>
+      <p>Usa cualquier credencial para explorar la demo.</p>
+      <div class="field" style="margin-bottom:14px">
+        <label>Correo</label>
+        <input class="inp" type="email" value="maria.gomez@icoporesoccidente.co">
+      </div>
+      <div class="field" style="margin-bottom:20px">
+        <label>Contraseña</label>
+        <input class="inp" type="password" value="············">
+      </div>
+      <button class="btn primary block" onclick="enterApp()">Ingresar al panel</button>
+      <p style="margin-top:16px;font-size:12px;text-align:center">Entras como <strong>Administrador</strong> · podrás cambiar de rol dentro.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <aside class="sb" id="sb">
+    <div class="sb-head">
+      <svg class="logo" viewBox="0 0 40 40" fill="none">
+        <rect x="1.5" y="1.5" width="37" height="37" rx="9" fill="#16303280" stroke="#2A3037"/>
+        <g fill="#eef6f6"><circle cx="14" cy="14" r="4.4"/><circle cx="24" cy="12.5" r="3.4"/><circle cx="26.5" cy="22" r="4.4"/><circle cx="15" cy="24.5" r="3.9"/><circle cx="21" cy="19" r="2.6" fill="#3FB6C1"/></g>
+      </svg>
+      <div class="sb-name">Icopores Occ.<span>CONTROL DE BODEGA</span></div>
+    </div>
+    <nav class="sb-nav" id="nav"></nav>
+    <div class="sb-foot">
+      <div class="roleswitch">
+        <div class="k">▸ Ver la demo como</div>
+        <div class="rs-btns" id="rsw">
+          <button data-role="A" class="on">Admin</button>
+          <button data-role="O">Operador</button>
+          <button data-role="C">Consulta</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim" onclick="toggleSb(false)"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="hamb iconbtn" onclick="toggleSb(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div class="tb-title"><span class="eyebrow" id="tbCrumb">Panel</span><h1 id="tbTitle">Panel principal</h1></div>
+      <div class="readout" id="readout"></div>
+      <div class="tb-user">
+        <div class="avatar" id="avat">MG</div>
+        <div class="hide-m"><div class="nm" id="uname">María Gómez</div><div class="rl" id="urole">Administrador</div></div>
+      </div>
+    </header>
+    <main class="view" id="view"></main>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer"><div id="drawerContent"></div></aside>
+
+<script>
+/* ================= MOCK DATA ================= */
+const TODAY = new Date(2026,7,6); // 6 ago 2026
+const fmt = n => Math.round(n).toLocaleString('es-CO');
+const money = n => '$'+n.toLocaleString('es-CO');
+/* v2: mobile detection driven by real #app width (real phone OR preview frame) */
+var MVIEWS={};
+function isMobile(){const a=document.getElementById('app');return !!a&&a.clientWidth>0&&a.clientWidth<=820;}
+
+const products = [
+  {sku:'LAM-2020', name:'Lámina EPS 1×2m · 20mm', fN:1240, fI:85,  rN:900,  rI:0,   act:true},
+  {sku:'BLQ-5050', name:'Bloque EPS 1×0.5×0.5m',  fN:640,  fI:40,  rN:820,  rI:0,   act:true},
+  {sku:'CAV-20L',  name:'Cava nevera 20 L',        fN:310,  fI:22,  rN:180,  rI:15,  act:true},
+  {sku:'VAS-08',   name:'Vaso térmico 8 oz (×50)', fN:2100, fI:120, rN:1600, rI:60,  act:true},
+  {sku:'BAN-N2',   name:'Bandeja EPS #2 (×100)',   fN:1750, fI:210, rN:1400, rI:120, act:true},
+  {sku:'DOM-30',   name:'Domo icopor 30 cm',       fN:420,  fI:18,  rN:260,  rI:0,   act:true},
+  {sku:'MCA-2',    name:'Media caña tubería 2"',   fN:980,  fI:60,  rN:1120, rI:0,   act:true},
+  {sku:'PLA-60',   name:'Plafón techo 60×60',      fN:520,  fI:34,  rN:300,  rI:20,  act:false},
+];
+const P = p => { const dN=p.fN-p.rN, dI=p.fI-p.rI; return {...p,
+  fis:p.fN+p.fI, res:p.rN+p.rI, dispN:dN, dispI:dI, disp:dN+dI,
+  faltN:Math.max(0,p.rN-p.fN), faltI:Math.max(0,p.rI-p.fI), falt:Math.max(0,p.rN-p.fN)+Math.max(0,p.rI-p.fI)}; };
+const PROD = products.map(P);
+const totals = PROD.reduce((a,p)=>({fis:a.fis+p.fis,res:a.res+p.res,disp:a.disp+p.disp,falt:a.falt+p.falt}),{fis:0,res:0,disp:0,falt:0});
+
+const companies = [
+  {id:'E-004', name:'Constructora Andina S.A.S', nit:'900.412.556-1', contact:'Laura Mejía', phone:'310 555 0142', email:'compras@andina.co', act:true, orders:4},
+  {id:'E-002', name:'Distribuidora El Poblado',  nit:'901.223.900-7', contact:'Andrés Vélez', phone:'315 555 0088', email:'pedidos@elpoblado.co', act:true, orders:3},
+  {id:'E-007', name:'Empaques del Valle',         nit:'900.887.301-4', contact:'Diana Ríos',  phone:'320 555 0210', email:'compras@empaquesvalle.co', act:true, orders:6},
+  {id:'E-001', name:'Avícola La Granja',          nit:'800.556.112-9', contact:'Jorge Pérez', phone:'318 555 0177', email:'logistica@lagranja.co', act:true, orders:2},
+  {id:'E-005', name:'Cadena Fría Occidente',      nit:'901.660.223-3', contact:'Sofía Cano',  phone:'301 555 0333', email:'sofia@cadenafria.co', act:true, orders:2},
+  {id:'E-009', name:'Ferretería Central',         nit:'71.220.554-2',  contact:'—',           phone:'—', email:'—', act:false, orders:1},
+];
+
+const orders = [
+  {no:'ORD-2026-0188', comp:'Constructora Andina S.A.S', created:'28 jul 2026', due:'08 ago 2026', dueD:2,  state:'faltante', prio:'Alta', req:820, cov:640, del:0,  inv:'n'},
+  {no:'ORD-2026-0191', comp:'Empaques del Valle',        created:'30 jul 2026', due:'09 ago 2026', dueD:3,  state:'parcial',  prio:'Media',req:1600,cov:1600,del:400,inv:'n'},
+  {no:'ORD-2026-0193', comp:'Cadena Fría Occidente',     created:'31 jul 2026', due:'12 ago 2026', dueD:6,  state:'cubierta', prio:'Media',req:180, cov:180, del:0,  inv:'n'},
+  {no:'ORD-2026-0180', comp:'Distribuidora El Poblado',  created:'20 jul 2026', due:'04 ago 2026', dueD:-2, state:'vencida',  prio:'Alta', req:1120,cov:980, del:0,  inv:'n'},
+  {no:'ORD-2026-0185', comp:'Avícola La Granja',         created:'24 jul 2026', due:'10 ago 2026', dueD:4,  state:'preparacion',prio:'Baja',req:1400,cov:1400,del:0, inv:'i'},
+  {no:'ORD-2026-0177', comp:'Empaques del Valle',        created:'15 jul 2026', due:'01 ago 2026', dueD:-5, state:'entregada', prio:'Media',req:600, cov:600, del:600,inv:'n'},
+  {no:'ORD-2026-0195', comp:'Constructora Andina S.A.S', created:'05 ago 2026', due:'20 ago 2026', dueD:14, state:'pendiente', prio:'Baja', req:260, cov:260, del:0,  inv:'n'},
+  {no:'ORD-2026-0196', comp:'Distribuidora El Poblado',  created:'06 ago 2026', due:'—',           dueD:99, state:'borrador',  prio:'—',    req:0,   cov:0,   del:0,  inv:'n'},
+];
+const ST = {
+  borrador:['Borrador','mut'], pendiente:['Pendiente','info'], faltante:['Con faltantes','danger'],
+  parcial:['Parcialmente cubierta','warn'], cubierta:['Totalmente cubierta','ok'], preparacion:['En preparación','brand'],
+  entregada_p:['Entregada parcialmente','warn'], entregada:['Entregada','ok'], cancelada:['Cancelada','mut'], vencida:['Vencida','crit'],
+};
+
+const moves = [
+  {dir:'in', qty:120, prod:'Lámina EPS 1×2m · 20mm', inv:'n', type:'Entrada · producción', before:1120, after:1240, user:'Juan Pérez', when:'06 ago · 10:45', order:'—', comp:'—'},
+  {dir:'out',qty:400, prod:'Vaso térmico 8 oz (×50)',inv:'n', type:'Salida · entrega',      before:2500, after:2100, user:'Juan Pérez', when:'06 ago · 09:12', order:'ORD-2026-0191', comp:'Empaques del Valle'},
+  {dir:'adj',qty:15,  prod:'Cava nevera 20 L',        inv:'i', type:'Ajuste · normal→imperf', before:0,   after:15,  user:'María Gómez', when:'05 ago · 17:30', order:'—', comp:'—'},
+  {dir:'in', qty:210, prod:'Bandeja EPS #2 (×100)',   inv:'i', type:'Entrada · producción',  before:0,   after:210, user:'Juan Pérez', when:'05 ago · 14:05', order:'—', comp:'—'},
+  {dir:'out',qty:600, prod:'Domo icopor 30 cm',       inv:'n', type:'Salida · entrega',      before:1020,after:420, user:'Juan Pérez', when:'01 ago · 11:20', order:'ORD-2026-0177', comp:'Empaques del Valle'},
+  {dir:'adj',qty:8,   prod:'Plafón techo 60×60',      inv:'n', type:'Ajuste negativo',       before:528, after:520, user:'María Gómez', when:'31 jul · 16:40', order:'—', comp:'—'},
+  {dir:'in', qty:640, prod:'Bloque EPS 1×0.5×0.5m',   inv:'n', type:'Entrada · producción',  before:0,   after:640, user:'Juan Pérez', when:'30 jul · 08:30', order:'—', comp:'—'},
+  {dir:'in', qty:2100,prod:'Vaso térmico 8 oz (×50)', inv:'n', type:'Entrada · producción',  before:400, after:2500,user:'Juan Pérez', when:'29 jul · 15:15', order:'—', comp:'—'},
+];
+
+const alerts = [
+  {lvl:'imp', type:'Orden próxima con faltante', comp:'Constructora Andina S.A.S', order:'ORD-2026-0188', due:'08 ago 2026', days:2, prod:'Bloque EPS 1×0.5×0.5m', pend:820, falt:180, st:'No leída'},
+  {lvl:'crit',type:'Orden vencida y no entregada', comp:'Distribuidora El Poblado', order:'ORD-2026-0180', due:'04 ago 2026', days:-2, prod:'Media caña tubería 2"', pend:1120, falt:140, st:'No leída'},
+  {lvl:'prev',type:'Orden próxima a la entrega', comp:'Avícola La Granja', order:'ORD-2026-0185', due:'10 ago 2026', days:4, prod:'Bandeja EPS #2', pend:1400, falt:0, st:'Leída'},
+  {lvl:'imp', type:'Producto con reservas sobre el físico', comp:'—', order:'—', due:'—', days:0, prod:'Media caña tubería 2"', pend:0, falt:140, st:'No leída'},
+  {lvl:'info',type:'Orden lista para entregar', comp:'Cadena Fría Occidente', order:'ORD-2026-0193', due:'12 ago 2026', days:6, prod:'Cava nevera 20 L', pend:180, falt:0, st:'No leída'},
+  {lvl:'prev',type:'Modificación importante de orden próxima', comp:'Empaques del Valle', order:'ORD-2026-0191', due:'09 ago 2026', days:3, prod:'Vaso térmico 8 oz', pend:1200, falt:0, st:'Resuelta'},
+];
+const ALVL={crit:['crit','Crítica'],imp:['imp','Importante'],prev:['prev','Preventiva'],info:['info','Informativa']};
+const alertUnread = alerts.filter(a=>a.st==='No leída').length;
+
+const users = [
+  {name:'María Gómez', email:'maria.gomez@icoporesoccidente.co', role:'Administrador', act:true, ini:'MG'},
+  {name:'Juan Pérez', email:'juan.perez@icoporesoccidente.co', role:'Operador de inventario', act:true, ini:'JP'},
+  {name:'Carlos Ruiz', email:'carlos.ruiz@icoporesoccidente.co', role:'Usuario de consulta', act:true, ini:'CR'},
+  {name:'Ana Torres', email:'ana.torres@icoporesoccidente.co', role:'Operador de inventario', act:false, ini:'AT'},
+];
+const audit = [
+  {user:'Juan Pérez', role:'Operador', act:'Registro de producción', ent:'Producción', id:'PRD-0442', when:'06 ago · 10:45', old:'—', new:'+120 u normal · LAM-2020'},
+  {user:'Juan Pérez', role:'Operador', act:'Registro de salida', ent:'Movimiento', id:'MOV-1188', when:'06 ago · 09:12', old:'2.500 u', new:'2.100 u'},
+  {user:'María Gómez', role:'Admin', act:'Modificación de orden', ent:'Orden', id:'ORD-2026-0191', when:'05 ago · 17:52', old:'1.200 u', new:'1.600 u'},
+  {user:'María Gómez', role:'Admin', act:'Ajuste de inventario', ent:'Movimiento', id:'MOV-1185', when:'05 ago · 17:30', old:'0 u imperf', new:'15 u imperf'},
+  {user:'María Gómez', role:'Admin', act:'Creación de orden', ent:'Orden', id:'ORD-2026-0195', when:'05 ago · 16:10', old:'—', new:'260 u · Andina'},
+  {user:'María Gómez', role:'Admin', act:'Inicio de sesión', ent:'Sesión', id:'—', when:'05 ago · 08:02', old:'—', new:'—'},
+  {user:'María Gómez', role:'Admin', act:'Desactivación de producto', ent:'Producto', id:'PLA-60', when:'02 ago · 11:20', old:'Activo', new:'Inactivo'},
+  {user:'María Gómez', role:'Admin', act:'Exportación de informe', ent:'Informe', id:'INV-2026-07', when:'01 ago · 18:00', old:'—', new:'inventario.xlsx'},
+];
+
+/* ================= ICONS ================= */
+const I = {
+  dash:'<path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+  factory:'<path d="M3 21V9l6 4V9l6 4V6l6 3v12z"/>',
+  swap:'<path d="M7 4L3 8l4 4"/><path d="M3 8h14"/><path d="M17 20l4-4-4-4"/><path d="M21 16H7"/>',
+  order:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  truck:'<path d="M3 6h11v9H3z"/><path d="M14 9h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>',
+  bell:'<path d="M6 9a6 6 0 0112 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 004 0"/>',
+  tag:'<path d="M3 12V4h8l9 9-8 8z"/><circle cx="7.5" cy="7.5" r="1.3"/>',
+  bldg:'<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h6v6H9z"/>',
+  chart:'<path d="M4 20V4M4 20h16"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0112 0"/><path d="M16 5a3 3 0 010 6M15 14a6 6 0 016 6"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>',
+  arrUp:'<path d="M12 19V5M6 11l6-6 6 6"/>', arrDn:'<path d="M12 5v14M6 13l6 6 6-6"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+  download:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 21h16"/>', edit:'<path d="M4 20h4L18 10l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+  chevR:'<path d="M9 6l6 6-6 6"/>', calendar:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>', logout:'<path d="M15 4h4v16h-4"/><path d="M10 12h9M13 8l-3 4 3 4"/>',
+};
+const ic = (n,cls='') => `<svg class="${cls}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex:none">${I[n]}</svg>`;
+
+/* ================= NAV CONFIG ================= */
+const NAV = [
+  {id:'home',   label:'Panel',       icon:'dash',    roles:'AOC'},
+  {sect:'Operación'},
+  {id:'inventario',label:'Inventario',icon:'box',    roles:'AOC'},
+  {id:'produccion',label:'Producción',icon:'factory',roles:'AO'},
+  {id:'movimientos',label:'Movimientos',icon:'swap', roles:'AOC'},
+  {id:'ordenes', label:'Órdenes',     icon:'order',  roles:'AOC'},
+  {id:'entregas',label:'Entregas',    icon:'truck',  roles:'AO'},
+  {id:'alertas', label:'Alertas',     icon:'bell',   roles:'A', badge:alertUnread},
+  {sect:'Catálogo'},
+  {id:'productos',label:'Productos',  icon:'tag',    roles:'AOC'},
+  {id:'empresas',label:'Empresas',    icon:'bldg',   roles:'AC'},
+  {sect:'Análisis'},
+  {id:'informes',label:'Informes',    icon:'chart',  roles:'AC'},
+  {id:'usuarios',label:'Usuarios',    icon:'users',  roles:'A'},
+  {id:'auditoria',label:'Auditoría',  icon:'shield', roles:'A'},
+];
+const ROLE_NAME={A:'Administrador',O:'Operador de inventario',C:'Usuario de consulta'};
+const ROLE_USER={A:{nm:'María Gómez',ini:'MG'},O:{nm:'Juan Pérez',ini:'JP'},C:{nm:'Carlos Ruiz',ini:'CR'}};
+let role='A', current='home';
+
+/* ================= HELPERS ================= */
+const pill=(txt,cls)=>`<span class="pill ${cls}"><i class="dot"></i>${txt}</span>`;
+const stPill=k=>pill(ST[k][0],ST[k][1]);
+const invTag=t=>t==='i'?`<span class="tag-inv i">Imperfecto</span>`:`<span class="tag-inv n">Normal</span>`;
+const $=s=>document.querySelector(s);
+
+/* ================= VIEWS ================= */
+const VIEWS={};
+const PAGEMETA={};
+
+/* ---- DASHBOARD (B1) ---- */
+PAGEMETA.home={crumb:'Panel',title:'Panel principal'};
+VIEWS.home=()=>{
+  if(role==='O') return VIEWS.homeOperador();
+  if(role==='C') return VIEWS.homeConsulta();
+  return `
+  <section class="tiles" style="margin-bottom:6px">
+    ${tile('Físico total',fmt(totals.fis),'u','box','',' ')}
+    ${tile('Reservado',fmt(totals.res),'u','','','Comprometido a órdenes')}
+    ${tile('Disponible',fmt(totals.disp),'u','','ok-t','Físico − reservado')}
+    ${tile('Faltante',fmt(totals.falt),'u','','warn-t','Para cubrir órdenes')}
+  </section>
+  <div class="two-col" style="margin-top:16px">
+    <div>
+      <div class="card">
+        <div class="card-h"><h3>Producción</h3><span class="sub">Últimos periodos</span><div class="spacer"></div><span class="pill accent"><i class="dot"></i>Imperf. 6,4%</span></div>
+        <div class="card-pad">
+          <div class="tiles" style="grid-template-columns:repeat(3,1fr)">
+            ${miniStat('Hoy','330','u','+12%','up')}
+            ${miniStat('Semana','3.610','u','+4%','up')}
+            ${miniStat('Mes','14.280','u','−2%','down')}
+          </div>
+          <div class="bars" style="margin-top:20px">
+            ${['Lun','Mar','Mié','Jue','Vie','Sáb'].map((d,i)=>{const n=[70,55,90,60,85,40][i],im=[6,4,9,5,7,3][i];
+              return `<div class="bar-col"><div class="bar-stack"><div class="bar-i" style="height:${im*1.2}px"></div><div class="bar-n" style="height:${n}px"></div></div><span class="bar-lbl">${d}</span></div>`}).join('')}
+          </div>
+          <div class="cov-legend" style="justify-content:center"><span><i class="dotm" style="background:var(--brand)"></i>Normal</span><span><i class="dotm" style="background:var(--accent)"></i>Imperfecto</span></div>
+        </div>
+      </div>
+      <div class="sec-h"><h2>Últimos movimientos</h2><div class="line"></div><button class="btn sm ghost" onclick="go('movimientos')">Ver todo ${ic('chevR')}</button></div>
+      <div class="mv-list">${moves.slice(0,4).map(mvRow).join('')}</div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-h"><h3>Alertas</h3><span class="pill danger"><i class="dot"></i>${alertUnread} sin leer</span></div>
+        <div style="padding:8px">${alerts.slice(0,3).map(a=>`
+          <button class="nav-i" style="color:var(--ink);width:100%;text-align:left;align-items:flex-start" onclick="go('alertas')">
+            <span style="width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none;background:var(--${a.lvl==='crit'?'crit':a.lvl==='imp'?'danger':a.lvl==='prev'?'warn':'info'})"></span>
+            <span style="min-width:0"><span style="display:block;font-weight:600;font-size:13px">${a.type}</span>
+            <span style="display:block;font-size:11.5px;color:var(--muted)" class="mono">${a.order} · ${a.days<0?Math.abs(a.days)+'d vencida':a.days+'d restantes'}</span></span>
+          </button>`).join('')}</div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-h"><h3>Próximas entregas</h3></div>
+        <div class="card-pad" style="display:flex;flex-direction:column;gap:12px">
+          ${orders.filter(o=>o.dueD>=0&&o.dueD<10&&o.state!=='borrador').sort((a,b)=>a.dueD-b.dueD).slice(0,4).map(o=>`
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="text-align:center;flex:none"><div class="mono" style="font-size:20px;line-height:1;${o.dueD<=2?'color:var(--danger)':''}">${o.dueD}</div><div class="mono" style="font-size:9px;color:var(--muted)">DÍAS</div></div>
+              <div style="min-width:0;flex:1"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.comp}</div><div class="mono" style="font-size:11px;color:var(--muted)">${o.no} · ${fmt(o.req)} u</div></div>
+              ${stPill(o.state)}
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-h"><h3>Actividad reciente</h3></div>
+        <div class="card-pad" style="display:flex;flex-direction:column;gap:11px">
+          ${users.filter(u=>u.act).map(u=>`<div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:30px;height:30px;font-size:11px;background:${u.role.includes('Admin')?'var(--brand)':u.role.includes('Operador')?'var(--accent)':'var(--muted)'}">${u.ini}</div><div style="flex:1"><div style="font-size:12.5px;font-weight:600">${u.name}</div><div class="mono" style="font-size:10.5px;color:var(--muted)">${u.role}</div></div><span class="led green" style="width:6px;height:6px"></span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+};
+function tile(k,v,u,extra,cls,d){return `<div class="tile ${cls||''}"><div class="k">${extra?ic(extra):''}${k}</div><div class="v">${v}<span class="u"> ${u}</span></div>${d?`<div class="d">${d}</div>`:''}</div>`;}
+function miniStat(k,v,u,tr,dir){return `<div><div class="k mono" style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">${k}</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:6px"><span class="mono" style="font-size:24px">${v}<span style="font-size:12px;color:var(--faint)"> ${u}</span></span><span class="trend ${dir}">${tr}</span></div></div>`;}
+function mvRow(m){const cls=m.dir==='in'?'in':m.dir==='out'?'out':'adj';const sign=m.dir==='in'?'+':m.dir==='out'?'−':'±';
+  return `<button class="mv" onclick="openMove(${moves.indexOf(m)})" style="text-align:left">
+    <span class="mv-ico ${cls}">${ic(m.dir==='in'?'arrUp':m.dir==='out'?'arrDn':'swap')}</span>
+    <span class="mv-main"><span class="t">${m.prod}</span><span class="s">${invTag(m.inv)} ${m.type} ${m.order!=='—'?'· '+m.order:''}</span></span>
+    <span class="mv-delta ${cls}">${sign}${fmt(m.qty)}</span>
+    <span class="mv-ba">${fmt(m.before)} → ${fmt(m.after)}</span>
+    <span class="mv-when">${m.when}<br><span style="color:var(--faint)">${m.user}</span></span>
+  </button>`;}
+
+/* ---- HOME OPERADOR (B2) ---- */
+VIEWS.homeOperador=()=>`
+  <div class="card card-pad" style="margin-bottom:18px;background:linear-gradient(120deg,var(--brand-tint),var(--surface));border-color:#cfe4e4">
+    <span class="eyebrow">Turno · 06 ago 2026</span>
+    <h2 style="font-size:20px;margin:6px 0 4px">Hola, Juan 👋</h2>
+    <p style="color:var(--ink-2)">Tienes <strong>3 órdenes</strong> para preparar hoy y <strong>2 entradas</strong> de producción pendientes de registrar.</p>
+  </div>
+  <div class="sec-h"><h2>Acciones rápidas</h2><div class="line"></div></div>
+  <div class="tiles">
+    ${quickAction('factory','Registrar producción','Entrada de unidades a bodega','produccion')}
+    ${quickAction('truck','Registrar salida','Entrega contra una orden','entregas')}
+    ${quickAction('box','Ver inventario','Físico, reservado y disponible','inventario')}
+    ${quickAction('swap','Ver movimientos','Historial de la bodega','movimientos')}
+  </div>
+  <div class="sec-h"><h2>Órdenes a procesar</h2><div class="line"></div></div>
+  <div class="mv-list">${orders.filter(o=>['faltante','parcial','cubierta','preparacion'].includes(o.state)).map(o=>`
+    <button class="mv" style="grid-template-columns:1fr auto auto;text-align:left" onclick="openOrder('${o.no}')">
+      <span class="mv-main"><span class="t">${o.comp}</span><span class="s mono">${o.no} · entrega ${o.due} · ${fmt(o.req)} u</span></span>
+      ${stPill(o.state)}<span class="mv-when">${ic('chevR')}</span></button>`).join('')}</div>`;
+function quickAction(icon,t,d,route){return `<button class="tile accent" style="text-align:left;cursor:pointer" onclick="go('${route}')"><div class="k">${ic(icon)}Acción</div><div style="font-weight:650;font-size:16px;margin-top:10px">${t}</div><div class="d">${d}</div></button>`;}
+
+/* ---- HOME CONSULTA (B3) ---- */
+VIEWS.homeConsulta=()=>`
+  <div class="card card-pad" style="margin-bottom:18px"><span class="eyebrow">Solo lectura</span><h2 style="font-size:20px;margin:6px 0 4px">Consulta de bodega</h2><p style="color:var(--ink-2)">Acceso de lectura a inventario, órdenes, empresas y movimientos.</p></div>
+  <section class="tiles">${tile('Físico total',fmt(totals.fis),'u','box','','')}${tile('Reservado',fmt(totals.res),'u','','','')}${tile('Disponible',fmt(totals.disp),'u','','ok-t','')}${tile('Faltante',fmt(totals.falt),'u','','warn-t','')}</section>
+  <div class="sec-h"><h2>Consultar</h2><div class="line"></div></div>
+  <div class="tiles">${quickAction('box','Inventario','Existencias por producto','inventario')}${quickAction('order','Órdenes','Estado y fechas de entrega','ordenes')}${quickAction('bldg','Empresas','Clientes y sus órdenes','empresas')}${quickAction('chart','Informes','Informes autorizados','informes')}</div>`;
+
+/* ---- INVENTARIO (E1) ---- */
+PAGEMETA.inventario={crumb:'Operación',title:'Inventario general'};
+VIEWS.inventario=()=>`
+  <div class="toolbar">
+    <div class="search">${ic('search')}<input placeholder="Buscar producto o SKU…"></div>
+    <div class="chipset"><button class="chip on">Todos</button><button class="chip">Con faltante</button><button class="chip">Solo normal</button><button class="chip">Solo imperfecto</button></div>
+    <div class="spacer"></div>
+    ${role!=='C'?`<button class="btn"><span>${ic('download')}</span>Exportar</button>`:''}
+  </div>
+  <div class="card"><div class="tw"><table class="tbl">
+    <thead><tr><th>Producto</th><th class="num">Físico N</th><th class="num">Físico I</th><th class="num">Reservado</th><th class="num">Disponible</th><th class="num">Faltante</th><th>Próx. entrega</th><th class="num">Órd.</th><th></th></tr></thead>
+    <tbody>${PROD.filter(p=>p.act).map(p=>`
+      <tr class="rowlink" tabindex="0" onclick="openProduct('${p.sku}')" style="${p.falt>0?'box-shadow:inset 3px 0 0 var(--danger)':''}">
+        <td><div class="prod-cell"><span class="sku">${p.sku}</span><strong>${p.name}</strong></div></td>
+        <td class="num">${fmt(p.fN)}</td><td class="num" style="color:var(--warn)">${fmt(p.fI)}</td>
+        <td class="num">${fmt(p.res)}</td>
+        <td class="num ${p.disp<0?'neg':''}">${p.disp<0?'−'+fmt(-p.disp):fmt(p.disp)}</td>
+        <td class="num">${p.falt>0?`<span class="pill danger" style="padding:2px 7px">${fmt(p.falt)}</span>`:'<span style="color:var(--faint)">0</span>'}</td>
+        <td>${nextDue(p.name)}</td>
+        <td class="num">${ordCount(p.name)}</td><td>${ic('chevR','',)}</td>
+      </tr>`).join('')}</tbody>
+  </table></div></div>
+  <p style="margin-top:12px;font-size:12px;color:var(--muted)" class="mono">▸ Filas con faltante resaltadas · disponible = físico − reservado (puede ser negativo)</p>`;
+function nextDue(name){const o=orders.filter(x=>x.dueD>=0&&x.state!=='borrador').sort((a,b)=>a.dueD-b.dueD)[Math.floor(Math.random()*2)];return o?`<span class="mono" style="font-size:12px">${o.due}</span>`:'<span style="color:var(--faint)">—</span>';}
+function ordCount(name){return (2+ (name.length%3));}
+
+/* ---- DETALLE INVENTARIO (E2) → drawer opens product ---- */
+/* handled by openProduct */
+
+/* ---- PRODUCCION (F1) ---- */
+PAGEMETA.produccion={crumb:'Operación',title:'Registrar producción'};
+VIEWS.produccion=()=>`
+  <div class="two-col">
+    <div class="card">
+      <div class="card-h"><h3>Nueva entrada por producción</h3><span class="sub">Aumenta el inventario físico</span></div>
+      <div class="card-pad">
+        <div class="form-grid">
+          <div class="field"><label>Producto <span class="req">*</span></label>
+            <select class="inp"><option>Selecciona un producto activo…</option>${PROD.filter(p=>p.act).map(p=>`<option>${p.sku} · ${p.name}</option>`).join('')}</select>
+            <span class="hint">Solo productos activos creados por el administrador.</span></div>
+          <div class="field"><label>Fecha de producción <span class="req">*</span></label><input class="inp mono" type="date" value="2026-08-06"></div>
+          <div class="field"><label>Unidades normales <span class="req">*</span></label><input class="inp mono" id="pN" value="120" oninput="calcProd()"></div>
+          <div class="field"><label>Unidades con imperfectos</label><input class="inp mono" id="pI" value="8" oninput="calcProd()"></div>
+          <div class="field full"><label>Observaciones</label><textarea class="inp" placeholder="Notas del turno, molde, novedades…"></textarea></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-h"><h3>Resumen</h3></div>
+        <div class="card-pad">
+          <dl class="kv">
+            <dt>Normal</dt><dd class="mono" id="sN">120 u</dd>
+            <dt>Imperfecto</dt><dd class="mono" id="sI" style="color:var(--warn)">8 u</dd>
+            <dt>% imperfectos</dt><dd class="mono" id="sPct">6,3%</dd>
+          </dl>
+          <div style="height:1px;background:var(--line);margin:14px 0"></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="eyebrow">Total producido</span><span class="mono" id="sTot" style="font-size:26px">128 u</span></div>
+          <div style="margin-top:14px;padding:11px;background:var(--brand-tint);border-radius:var(--r-sm);font-size:12px;color:var(--brand-2)">${ic('box','',)} Al confirmar, el físico normal sube <strong id="sImpN">120</strong> u y el imperfecto <strong id="sImpI">8</strong> u.</div>
+          <button class="btn primary block" style="margin-top:16px" onclick="showToast('Producción registrada · movimiento MOV-1189 generado')">Confirmar entrada</button>
+          <p class="mono" style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">Total = normales + imperfectos ✓</p>
+        </div>
+      </div>
+    </div>
+  </div>`;
+function calcProd(){const n=+($('#pN').value||0),i=+($('#pI').value||0),t=n+i;const pct=t?(i/t*100):0;
+  $('#sN').textContent=fmt(n)+' u';$('#sI').textContent=fmt(i)+' u';$('#sTot').textContent=fmt(t)+' u';
+  $('#sPct').textContent=pct.toFixed(1).replace('.',',')+'%';$('#sImpN').textContent=fmt(n);$('#sImpI').textContent=fmt(i);}
+
+/* ---- MOVIMIENTOS (G1) ---- */
+PAGEMETA.movimientos={crumb:'Operación',title:'Historial de movimientos'};
+VIEWS.movimientos=()=>`
+  <div class="toolbar">
+    <div class="search">${ic('search')}<input placeholder="Buscar por producto, orden, usuario…"></div>
+    <div class="chipset"><button class="chip on">Todos</button><button class="chip">${ic('arrUp')} Entradas</button><button class="chip">${ic('arrDn')} Salidas</button><button class="chip">${ic('swap')} Ajustes</button></div>
+    <div class="spacer"></div>
+    <select class="inp" style="width:auto"><option>Más recientes</option><option>Más antiguos</option><option>Mayor cantidad</option><option>Menor cantidad</option></select>
+    ${role!=='C'?`<button class="btn"><span>${ic('download')}</span>Excel</button>`:''}
+  </div>
+  <div class="toolbar" style="margin-top:-6px">
+    <select class="inp" style="width:auto"><option>Todos los productos</option>${PROD.map(p=>`<option>${p.name}</option>`).join('')}</select>
+    <select class="inp" style="width:auto"><option>Tipo inventario</option><option>Normal</option><option>Imperfecto</option></select>
+    <input class="inp mono" type="date" style="width:auto" value="2026-07-01"><span style="color:var(--muted)">→</span><input class="inp mono" type="date" style="width:auto" value="2026-08-06">
+  </div>
+  <div class="mv-list">${moves.map(mvRow).join('')}</div>`;
+
+/* ---- ORDENES (H1) ---- */
+PAGEMETA.ordenes={crumb:'Operación',title:'Órdenes'};
+VIEWS.ordenes=()=>`
+  <div class="toolbar">
+    <div class="search">${ic('search')}<input placeholder="Buscar orden o empresa…"></div>
+    <div class="chipset"><button class="chip on">Todas</button><button class="chip">Con faltantes</button><button class="chip">Próximas</button><button class="chip">Vencidas</button><button class="chip">Entregadas</button></div>
+    <div class="spacer"></div>
+    ${role==='A'?`<button class="btn primary" onclick="go('ordenNueva')">${ic('plus')}Nueva orden</button>`:''}
+  </div>
+  <div class="card"><div class="tw"><table class="tbl">
+    <thead><tr><th>Orden</th><th>Empresa</th><th>Entrega</th><th class="num">Solicitado</th><th style="width:150px">Cobertura</th><th>Estado</th><th>Prioridad</th><th></th></tr></thead>
+    <tbody>${orders.map(o=>`
+      <tr class="rowlink" tabindex="0" onclick="openOrder('${o.no}')">
+        <td><span class="mono" style="font-weight:600;font-size:12.5px">${o.no}</span><br>${invTag(o.inv)}</td>
+        <td style="max-width:180px"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.comp}</div><span class="mono" style="font-size:11px;color:var(--muted)">Creada ${o.created}</span></td>
+        <td>${o.due==='—'?'<span style="color:var(--faint)">—</span>':`<span class="mono" style="font-size:12.5px;${o.dueD<0?'color:var(--danger)':o.dueD<=2?'color:var(--warn)':''}">${o.due}</span><br><span class="mono" style="font-size:10.5px;color:var(--muted)">${o.dueD<0?Math.abs(o.dueD)+'d vencida':o.dueD+'d'}</span>`}</td>
+        <td class="num">${fmt(o.req)}</td>
+        <td>${covBar(o)}</td>
+        <td>${stPill(o.state)}</td>
+        <td>${o.prio==='Alta'?pill('Alta','danger'):o.prio==='Media'?pill('Media','warn'):o.prio==='Baja'?pill('Baja','mut'):'<span style="color:var(--faint)">—</span>'}</td>
+        <td>${ic('chevR')}</td>
+      </tr>`).join('')}</tbody>
+  </table></div></div>`;
+function covBar(o){if(o.req===0)return '<span style="color:var(--faint)">—</span>';const f=Math.min(o.cov,o.req),m=Math.max(0,o.req-o.cov);const fp=f/o.req*100,mp=m/o.req*100;
+  return `<div class="cov"><i class="f" style="width:${fp}%"></i><i class="m" style="width:${mp}%"></i></div><div class="mono" style="font-size:10.5px;color:var(--muted);margin-top:4px">${fmt(o.cov)}/${fmt(o.req)}${m>0?' · falta '+fmt(m):''}</div>`;}
+
+/* ---- CREAR/EDITAR ORDEN (H3/H4) ---- */
+PAGEMETA.ordenNueva={crumb:'Órdenes',title:'Nueva orden'};
+VIEWS.ordenNueva=()=>`
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div class="card-h"><h3>Datos de la orden</h3></div>
+        <div class="card-pad"><div class="form-grid">
+          <div class="field"><label>Empresa <span class="req">*</span></label><select class="inp"><option>Selecciona empresa…</option>${companies.filter(c=>c.act).map(c=>`<option>${c.name}</option>`).join('')}</select></div>
+          <div class="field"><label>Fecha de entrega <span class="req">*</span></label><input class="inp mono" type="date" value="2026-08-18"></div>
+          <div class="field"><label>Prioridad</label><select class="inp"><option>Media</option><option>Alta</option><option>Baja</option></select></div>
+          <div class="field"><label>Estado inicial</label><select class="inp"><option>Borrador</option><option>Pendiente</option></select></div>
+          <div class="field full"><label>Observaciones</label><textarea class="inp" placeholder="Instrucciones de la orden…"></textarea></div>
+        </div></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-h"><h3>Productos solicitados</h3><div class="spacer"></div><button class="btn sm">${ic('plus')}Agregar línea</button></div>
+        <div class="tw"><table class="tbl" style="min-width:520px"><thead><tr><th>Producto</th><th>Inventario</th><th class="num">Cantidad</th><th class="num">Disponible</th><th class="num">Faltante</th></tr></thead>
+        <tbody>
+          <tr><td><select class="inp" style="min-width:180px"><option>Bloque EPS 1×0.5×0.5m</option></select></td><td><select class="inp"><option>Normal</option><option>Imperfecto</option></select></td><td class="num"><input class="inp mono" style="width:90px;text-align:right" value="820"></td><td class="num neg">−180</td><td class="num"><span class="pill danger">180</span></td></tr>
+          <tr><td><select class="inp" style="min-width:180px"><option>Domo icopor 30 cm</option></select></td><td><select class="inp"><option>Normal</option></select></td><td class="num"><input class="inp mono" style="width:90px;text-align:right" value="150"></td><td class="num">160</td><td class="num"><span style="color:var(--faint)">0</span></td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+    <div>
+      <div class="card"><div class="card-h"><h3>Resumen</h3></div><div class="card-pad">
+        <dl class="kv"><dt>Líneas</dt><dd class="mono">2</dd><dt>Total solicitado</dt><dd class="mono">970 u</dd><dt>Cubierto</dt><dd class="mono" style="color:var(--ok)">790 u</dd><dt>Faltante</dt><dd class="mono" style="color:var(--danger)">180 u</dd></dl>
+        <div style="margin-top:14px;padding:11px;background:var(--warn-tint);border-radius:var(--r-sm);font-size:12px;color:var(--warn)">${ic('bell')} La orden supera el disponible. Se guardará como <strong>Con faltantes</strong> y generará una alerta al administrador.</div>
+        <button class="btn primary block" style="margin-top:16px" onclick="showToast('Orden ORD-2026-0197 creada · faltante 180 u')">Crear orden</button>
+        <button class="btn block ghost" style="margin-top:8px" onclick="go('ordenes')">Cancelar</button>
+        <p class="mono" style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">▸ Crear la orden no descuenta inventario físico.</p>
+      </div></div>
+    </div>
+  </div>`;
+
+/* ---- ENTREGAS (I1) ---- */
+PAGEMETA.entregas={crumb:'Operación',title:'Registrar entrega'};
+VIEWS.entregas=()=>`
+  <div class="two-col">
+    <div class="card"><div class="card-h"><h3>Salida de inventario</h3><span class="sub">Descuenta físico real</span></div><div class="card-pad"><div class="form-grid">
+      <div class="field"><label>Orden <span class="req">*</span></label><select class="inp" onchange=""><option>ORD-2026-0191 · Empaques del Valle</option><option>ORD-2026-0193 · Cadena Fría Occidente</option></select></div>
+      <div class="field"><label>Empresa</label><input class="inp" value="Empaques del Valle" disabled></div>
+      <div class="field"><label>Producto <span class="req">*</span></label><select class="inp"><option>Vaso térmico 8 oz (×50)</option></select></div>
+      <div class="field"><label>Tipo de inventario</label><select class="inp"><option>Normal</option><option>Imperfecto</option></select></div>
+      <div class="field"><label>Cantidad a entregar <span class="req">*</span></label><input class="inp mono" value="600" oninput="calcDeliv(this.value)"><span class="hint">Pendiente de la orden: 1.200 u · entrega parcial permitida</span></div>
+      <div class="field"><label>Fecha y hora</label><input class="inp mono" type="datetime-local" value="2026-08-06T11:30"></div>
+      <div class="field full"><label>Observaciones</label><textarea class="inp" placeholder="Transportadora, remisión interna, novedad…"></textarea></div>
+    </div></div></div>
+    <div><div class="card"><div class="card-h"><h3>Impacto</h3></div><div class="card-pad">
+      <dl class="kv">
+        <dt>Físico antes</dt><dd class="mono">2.100 u</dd>
+        <dt>Salida</dt><dd class="mono" style="color:var(--danger)">−<span id="dQty">600</span> u</dd>
+        <dt>Físico después</dt><dd class="mono" id="dAfter">1.500 u</dd>
+        <dt>Pendiente orden</dt><dd class="mono" id="dPend">600 u</dd>
+      </dl>
+      <div style="height:1px;background:var(--line);margin:12px 0"></div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px"><span class="eyebrow">Nuevo estado</span><div class="spacer"></div>${stPill('entregada_p')}</div>
+      <button class="btn primary block" style="margin-top:16px" onclick="confirmDeliv()">Registrar salida</button>
+      <p class="mono" style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">Acción irreversible · genera movimiento</p>
+    </div></div></div>
+  </div>`;
+function calcDeliv(v){v=+v||0;$('#dQty').textContent=fmt(v);$('#dAfter').textContent=fmt(2100-v)+' u';$('#dPend').textContent=fmt(Math.max(0,1200-v))+' u';}
+
+/* ---- ALERTAS (J1) ---- */
+PAGEMETA.alertas={crumb:'Operación',title:'Centro de alertas'};
+VIEWS.alertas=()=>`
+  <div class="toolbar">
+    <div class="chipset"><button class="chip on">Todas</button><button class="chip">Sin leer (${alertUnread})</button><button class="chip">Crítica</button><button class="chip">Importante</button><button class="chip">Resueltas</button></div>
+    <div class="spacer"></div><button class="btn sm ghost">Marcar todas como leídas</button>
+  </div>
+  <div class="mv-list">${alerts.map((a,i)=>`
+    <div class="alert-row">
+      <div class="alert-bar ${a.lvl}"></div>
+      <div class="alert-body" style="padding-left:12px">
+        <div class="t">${a.type} ${pill(ALVL[a.lvl][1],a.lvl==='crit'?'crit':a.lvl==='imp'?'danger':a.lvl==='prev'?'warn':'info')} ${a.st==='No leída'?'<span class="led on" style="width:7px;height:7px"></span>':''}</div>
+        <div class="m">${a.comp!=='—'?a.comp+' · ':''}${a.prod}</div>
+        <div class="meta">${a.order!=='—'?`<span>${a.order}</span>`:''}${a.due!=='—'?`<span>Entrega ${a.due}</span>`:''}${a.pend>0?`<span>Pendiente ${fmt(a.pend)} u</span>`:''}${a.falt>0?`<span style="color:var(--danger)">Faltante ${fmt(a.falt)} u</span>`:''}<span>Estado: ${a.st}</span></div>
+      </div>
+      <div class="alert-side">
+        ${a.days!==0?`<div class="days ${a.days<0?'neg':''}">${Math.abs(a.days)}<span class="u">${a.days<0?'días vencida':'días rest.'}</span></div>`:'<span class="pill danger">Stock</span>'}
+        <div style="display:flex;gap:6px"><button class="btn sm" onclick="openAlert(${i})">Ver</button>${role==='A'?`<button class="btn sm ghost" onclick="showToast('Alerta marcada como leída')">Leída</button>`:''}</div>
+      </div>
+    </div>`).join('')}</div>`;
+
+/* ---- PRODUCTOS (C1) ---- */
+PAGEMETA.productos={crumb:'Catálogo',title:'Productos'};
+VIEWS.productos=()=>`
+  <div class="toolbar">
+    <div class="search">${ic('search')}<input placeholder="Buscar producto o SKU…"></div>
+    <div class="chipset"><button class="chip on">Todos</button><button class="chip">Activos</button><button class="chip">Inactivos</button></div>
+    <div class="spacer"></div>
+    ${role==='A'?`<button class="btn primary" onclick="openProductForm()">${ic('plus')}Nuevo producto</button>`:''}
+  </div>
+  <div class="card"><div class="tw"><table class="tbl">
+    <thead><tr><th>Producto</th><th class="num">Físico</th><th>Estado</th><th>Creado por</th><th>Últ. modificación</th><th></th></tr></thead>
+    <tbody>${PROD.map(p=>`<tr class="rowlink" tabindex="0" onclick="openProduct('${p.sku}')">
+      <td><div class="prod-cell"><span class="sku">${p.sku}</span><strong>${p.name}</strong></div></td>
+      <td class="num">${fmt(p.fis)}</td>
+      <td>${p.act?pill('Activo','ok'):pill('Inactivo','mut')}</td>
+      <td>María Gómez<br><span class="mono" style="font-size:10.5px;color:var(--muted)">12 mar 2026</span></td>
+      <td class="mono" style="font-size:12px;color:var(--muted)">02 ago 2026</td>
+      <td style="display:flex;gap:4px;justify-content:flex-end">${role==='A'?`<button class="iconbtn" onclick="event.stopPropagation();openProductForm('${p.sku}')">${ic('edit')}</button>`:''}${ic('chevR')}</td>
+    </tr>`).join('')}</tbody>
+  </table></div></div>
+  ${role!=='A'?`<p class="mono" style="margin-top:12px;font-size:12px;color:var(--muted)">▸ Solo el administrador puede crear o editar productos.</p>`:''}`;
+
+/* ---- EMPRESAS (D1) ---- */
+PAGEMETA.empresas={crumb:'Catálogo',title:'Empresas'};
+VIEWS.empresas=()=>`
+  <div class="toolbar">
+    <div class="search">${ic('search')}<input placeholder="Buscar empresa o NIT…"></div>
+    <div class="spacer"></div>
+    ${role==='A'?`<button class="btn primary" onclick="openCompanyForm()">${ic('plus')}Nueva empresa</button>`:''}
+  </div>
+  <div class="card"><div class="tw"><table class="tbl">
+    <thead><tr><th>Empresa</th><th>NIT</th><th>Contacto</th><th class="num">Órdenes</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${companies.map(c=>`<tr class="rowlink" tabindex="0" onclick="openCompany('${c.id}')">
+      <td><strong>${c.name}</strong><br><span class="mono" style="font-size:10.5px;color:var(--muted)">${c.id}</span></td>
+      <td class="mono" style="font-size:12px">${c.nit}</td>
+      <td>${c.contact}<br><span class="mono" style="font-size:10.5px;color:var(--muted)">${c.phone}</span></td>
+      <td class="num">${c.orders}</td>
+      <td>${c.act?pill('Activa','ok'):pill('Inactiva','mut')}</td>
+      <td>${ic('chevR')}</td></tr>`).join('')}</tbody>
+  </table></div></div>`;
+
+/* ---- INFORMES (K1-K5) ---- */
+PAGEMETA.informes={crumb:'Análisis',title:'Informes'};
+let repTab='prod';
+VIEWS.informes=()=>{
+  const tabs=[['prod','Producción'],['inv','Inventario'],['ord','Órdenes'],['mov','Movimientos'],['cierre','Cierre mensual']];
+  return `
+  <div class="tabs">${tabs.map(t=>`<button class="tab ${repTab===t[0]?'on':''}" onclick="repTab='${t[0]}';render()">${t[1]}</button>`).join('')}</div>
+  <div class="toolbar">
+    <select class="inp" style="width:auto"><option>Día</option><option selected>Este mes</option><option>Semana</option><option>Rango de fechas</option></select>
+    <input class="inp mono" type="date" value="2026-08-01" style="width:auto"><span style="color:var(--muted)">→</span><input class="inp mono" type="date" value="2026-08-31" style="width:auto">
+    <select class="inp" style="width:auto"><option>Todos los productos</option>${PROD.map(p=>`<option>${p.name}</option>`).join('')}</select>
+    <div class="spacer"></div>
+    <button class="btn primary">${ic('download')}Exportar a Excel</button>
+  </div>
+  ${repTab==='prod'?repProd():repTab==='inv'?repInv():repTab==='ord'?repOrd():repTab==='mov'?VIEWS.movimientos():repCierre()}
+  <p class="mono" style="margin-top:12px;font-size:11.5px;color:var(--muted)">▸ El archivo .xlsx respeta los filtros aplicados e incluye nombre, fecha, filtros y usuario.</p>`;
+};
+const repProd=()=>`<div class="card"><div class="tw"><table class="tbl"><thead><tr><th>Producto</th><th class="num">Total</th><th class="num">Normal</th><th class="num">Imperf.</th><th class="num">% Imperf.</th><th>Registró</th><th>Inventario result.</th></tr></thead><tbody>
+  ${PROD.filter(p=>p.act).map(p=>{const t=p.fN+p.fI,pct=t?(p.fI/t*100):0;return `<tr><td><div class="prod-cell"><span class="sku">${p.sku}</span><strong>${p.name}</strong></div></td><td class="num">${fmt(t)}</td><td class="num">${fmt(p.fN)}</td><td class="num" style="color:var(--warn)">${fmt(p.fI)}</td><td class="num">${pct.toFixed(1).replace('.',',')}%</td><td>Juan Pérez</td><td class="num">${fmt(p.fis)} u</td></tr>`}).join('')}
+  <tr style="background:var(--sunken-2);font-weight:700"><td>TOTAL</td><td class="num">14.280</td><td class="num">13.365</td><td class="num" style="color:var(--warn)">915</td><td class="num">6,4%</td><td>—</td><td class="num">—</td></tr>
+  </tbody></table></div></div>`;
+const repInv=()=>`<div class="card"><div class="tw"><table class="tbl"><thead><tr><th>Producto</th><th class="num">Fís. N</th><th class="num">Fís. I</th><th class="num">Res. N</th><th class="num">Res. I</th><th class="num">Disp.</th><th class="num">Falt.</th><th>Próx. entrega</th></tr></thead><tbody>
+  ${PROD.filter(p=>p.act).map(p=>`<tr><td><strong>${p.name}</strong></td><td class="num">${fmt(p.fN)}</td><td class="num">${fmt(p.fI)}</td><td class="num">${fmt(p.rN)}</td><td class="num">${fmt(p.rI)}</td><td class="num ${p.disp<0?'neg':''}">${p.disp<0?'−'+fmt(-p.disp):fmt(p.disp)}</td><td class="num">${p.falt>0?`<span style="color:var(--danger)">${fmt(p.falt)}</span>`:'0'}</td><td class="mono" style="font-size:12px">${p.falt>0?'08 ago':'—'}</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+const repOrd=()=>`<div class="card"><div class="tw"><table class="tbl"><thead><tr><th>Orden</th><th>Empresa</th><th>Estado</th><th class="num">Solicitado</th><th class="num">Entregado</th><th class="num">Pendiente</th></tr></thead><tbody>
+  ${orders.filter(o=>o.state!=='borrador').map(o=>`<tr><td class="mono" style="font-size:12px">${o.no}</td><td>${o.comp}</td><td>${stPill(o.state)}</td><td class="num">${fmt(o.req)}</td><td class="num">${fmt(o.del)}</td><td class="num">${fmt(o.req-o.del)}</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+const repCierre=()=>`<div class="two-col"><div class="card"><div class="card-h"><h3>Cierre · Julio 2026</h3><span class="sub">Inventario y producción</span></div><div class="card-pad"><dl class="kv">
+  <dt>Inventario inicial</dt><dd class="mono">6.940 u</dd><dt>Producción total</dt><dd class="mono" style="color:var(--ok)">+14.280 u</dd>
+  <dt>· Normal</dt><dd class="mono">13.365 u</dd><dt>· Imperfecto</dt><dd class="mono" style="color:var(--warn)">915 u</dd>
+  <dt>% imperfectos</dt><dd class="mono">6,4%</dd><dt>Total salidas</dt><dd class="mono" style="color:var(--danger)">−12.800 u</dd>
+  <dt>Inventario final</dt><dd class="mono" style="font-size:15px">8.420 u</dd><dt>Reservado al cierre</dt><dd class="mono">6.110 u</dd>
+  <dt>Disponible</dt><dd class="mono">2.310 u</dd><dt>Faltante</dt><dd class="mono" style="color:var(--danger)">640 u</dd>
+  </dl></div></div>
+  <div class="card"><div class="card-h"><h3>Órdenes y actividad</h3></div><div class="card-pad"><dl class="kv">
+  <dt>Creadas</dt><dd class="mono">12</dd><dt>Modificadas</dt><dd class="mono">5</dd><dt>Canceladas</dt><dd class="mono">1</dd>
+  <dt>Entregadas</dt><dd class="mono">8</dd><dt>Pendientes</dt><dd class="mono">4</dd><dt>Vencidas</dt><dd class="mono" style="color:var(--danger)">1</dd>
+  </dl><div style="height:1px;background:var(--line);margin:14px 0"></div><div class="eyebrow" style="margin-bottom:10px">Actividad por usuario</div>
+  ${users.filter(u=>u.act).map(u=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0"><span>${u.name}</span><span class="mono" style="color:var(--muted)">${[42,88,15][users.indexOf(u)]||10} acciones</span></div>`).join('')}
+  </div></div></div>`;
+
+/* ---- USUARIOS (L1) ---- */
+PAGEMETA.usuarios={crumb:'Análisis',title:'Usuarios'};
+VIEWS.usuarios=()=>`
+  <div class="toolbar"><div class="search">${ic('search')}<input placeholder="Buscar usuario…"></div><div class="spacer"></div><button class="btn primary" onclick="openUserForm()">${ic('plus')}Nuevo usuario</button></div>
+  <div class="card"><div class="tw"><table class="tbl"><thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody>
+  ${users.map(u=>`<tr><td><div style="display:flex;align-items:center;gap:10px"><div class="avatar" style="width:32px;height:32px;font-size:12px;background:${u.role.includes('Admin')?'var(--brand)':u.role.includes('Operador')?'var(--accent)':'var(--muted)'}">${u.ini}</div><strong>${u.name}</strong></div></td>
+  <td class="mono" style="font-size:12px">${u.email}</td><td>${pill(u.role,u.role.includes('Admin')?'brand':u.role.includes('Operador')?'accent':'mut')}</td>
+  <td>${u.act?pill('Activo','ok'):pill('Inactivo','mut')}</td><td style="text-align:right"><button class="iconbtn" onclick="openUserForm()">${ic('edit')}</button></td></tr>`).join('')}
+  </tbody></table></div></div>`;
+
+/* ---- AUDITORIA (L3) ---- */
+PAGEMETA.auditoria={crumb:'Análisis',title:'Auditoría'};
+VIEWS.auditoria=()=>`
+  <div class="toolbar"><div class="search">${ic('search')}<input placeholder="Buscar acción, usuario o entidad…"></div>
+  <select class="inp" style="width:auto"><option>Todas las acciones</option><option>Producción</option><option>Salidas</option><option>Órdenes</option><option>Usuarios</option></select>
+  <select class="inp" style="width:auto"><option>Todos los usuarios</option>${users.map(u=>`<option>${u.name}</option>`).join('')}</select>
+  <div class="spacer"></div><span class="pill mut">${ic('shield')} Registro inmutable</span></div>
+  <div class="card"><div class="tw"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>Cambio</th></tr></thead><tbody>
+  ${audit.map(a=>`<tr><td class="mono" style="font-size:12px;white-space:nowrap">${a.when}</td><td>${a.user}<br><span class="mono" style="font-size:10.5px;color:var(--muted)">${a.role}</span></td>
+  <td>${a.act}</td><td>${a.ent}<br><span class="mono" style="font-size:10.5px;color:var(--muted)">${a.id}</span></td>
+  <td>${a.old==='—'&&a.new==='—'?'<span style="color:var(--faint)">—</span>':`<div class="diff" style="grid-template-columns:auto auto auto;justify-content:start;gap:6px">${a.old!=='—'?`<span class="old">${a.old}</span><span class="arr">→</span>`:''}<span class="new">${a.new}</span></div>`}</td></tr>`).join('')}
+  </tbody></table></div></div>`;
+
+/* ---- PERFIL (M1) ---- */
+PAGEMETA.perfil={crumb:'Cuenta',title:'Mi perfil'};
+VIEWS.perfil=()=>`
+  <div class="two-col"><div class="card"><div class="card-h"><h3>Datos de la cuenta</h3></div><div class="card-pad"><div class="form-grid">
+  <div class="field"><label>Nombre</label><input class="inp" value="${ROLE_USER[role].nm}"></div>
+  <div class="field"><label>Correo</label><input class="inp mono" value="${users.find(u=>u.ini===ROLE_USER[role].ini)?.email||''}"></div>
+  <div class="field"><label>Rol</label><input class="inp" value="${ROLE_NAME[role]}" disabled></div>
+  <div class="field"><label>Estado</label><input class="inp" value="Activo" disabled></div>
+  </div><button class="btn primary" style="margin-top:16px" onclick="showToast('Cambios guardados')">Guardar cambios</button></div></div>
+  <div class="card"><div class="card-h"><h3>Contraseña</h3></div><div class="card-pad"><div class="field" style="margin-bottom:12px"><label>Contraseña actual</label><input class="inp" type="password" value="········"></div>
+  <div class="field" style="margin-bottom:12px"><label>Nueva contraseña</label><input class="inp" type="password"></div>
+  <div class="field"><label>Confirmar</label><input class="inp" type="password"></div>
+  <button class="btn block" style="margin-top:16px">Actualizar contraseña</button></div></div></div>`;
+
+/* ---- ESTADOS (M2) ---- */
+PAGEMETA.estados={crumb:'Sistema',title:'Estados de la interfaz'};
+VIEWS.estados=()=>`
+  <div class="grid" style="grid-template-columns:1fr 1fr">
+    <div class="card"><div class="card-h"><h3>Vacío</h3></div><div class="empty"><div class="ic">${ic('box')}</div><h3>Sin movimientos aún</h3><p>Cuando registres producción o salidas, aparecerán aquí.</p><button class="btn primary">${ic('plus')}Registrar producción</button></div></div>
+    <div class="card"><div class="card-h"><h3>Sin resultados</h3></div><div class="empty"><div class="ic">${ic('search')}</div><h3>No encontramos nada</h3><p>Prueba con otro término o quita algunos filtros.</p><button class="btn">Limpiar filtros</button></div></div>
+    <div class="card"><div class="card-h"><h3>Sin permiso (403)</h3></div><div class="empty"><div class="ic" style="color:var(--danger)">${ic('shield')}</div><h3>Acceso restringido</h3><p>Tu rol no tiene acceso a esta sección. Contacta al administrador.</p><button class="btn" onclick="go('home')">Ir al panel</button></div></div>
+    <div class="card"><div class="card-h"><h3>No encontrado (404)</h3></div><div class="empty"><div class="ic">${ic('order')}</div><h3>Esta página no existe</h3><p>El enlace puede haber cambiado o la orden fue eliminada.</p><button class="btn" onclick="go('home')">Volver</button></div></div>
+  </div>`;
+
+/* ================= DRAWERS & MODALS ================= */
+function openDrawer(html){$('#drawerContent').innerHTML=html;$('#drawer').classList.add('show');$('#overlay').classList.add('show');$('#overlay').onclick=closeAll;}
+function openModal(html){$('#overlay').innerHTML=`<div class="modal ${html.wide?'wide':''}">${html.body}</div>`;$('#overlay').classList.add('show');$('#overlay').onclick=e=>{if(e.target===$('#overlay'))closeAll();};}
+function closeAll(){$('#drawer').classList.remove('show');$('#overlay').classList.remove('show');$('#overlay').innerHTML='';}
+
+function openProduct(sku){const p=PROD.find(x=>x.sku===sku);
+  openDrawer(`<div class="drawer-h"><div style="flex:1"><span class="eyebrow">${p.sku}</span><h3>${p.name}</h3></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+  <div class="drawer-b">
+    <div style="display:flex;gap:8px;margin-bottom:16px">${p.act?pill('Activo','ok'):pill('Inactivo','mut')}${p.falt>0?pill('Con faltante','danger'):pill('Cubierto','ok')}</div>
+    <div class="tiles" style="grid-template-columns:1fr 1fr;gap:10px">
+      ${tile('Físico N',fmt(p.fN),'u','','','')}${tile('Físico I',fmt(p.fI),'u','','','')}
+      ${tile('Disponible',(p.disp<0?'−'+fmt(-p.disp):fmt(p.disp)),'u','',p.disp<0?'warn-t':'ok-t','')}${tile('Faltante',fmt(p.falt),'u','',p.falt>0?'warn-t':'','')}
+    </div>
+    <div class="sec-h" style="margin:20px 0 10px"><h2 style="font-size:14px">Reservas</h2><div class="line"></div></div>
+    <dl class="kv"><dt>Reservado normal</dt><dd class="mono">${fmt(p.rN)} u</dd><dt>Reservado imperf.</dt><dd class="mono">${fmt(p.rI)} u</dd><dt>Órdenes activas</dt><dd class="mono">${ordCount(p.name)}</dd><dt>Próxima entrega</dt><dd class="mono">${p.falt>0?'08 ago 2026':'12 ago 2026'}</dd></dl>
+    <div class="sec-h" style="margin:20px 0 10px"><h2 style="font-size:14px">Trazabilidad</h2><div class="line"></div></div>
+    <dl class="kv"><dt>Creado por</dt><dd>María Gómez · 12 mar 2026</dd><dt>Últ. modificación</dt><dd>María Gómez · 02 ago 2026</dd><dt>Última producción</dt><dd>06 ago 2026</dd></dl>
+    <div class="sec-h" style="margin:20px 0 10px"><h2 style="font-size:14px">Últimos movimientos</h2><div class="line"></div></div>
+    <div class="mv-list">${moves.filter(m=>m.prod===p.name).slice(0,3).map(mvRow).join('')||'<p style="color:var(--muted);font-size:13px">Sin movimientos recientes.</p>'}</div>
+    ${role==='A'?`<div style="display:flex;gap:8px;margin-top:20px"><button class="btn primary" onclick="openProductForm('${p.sku}')">${ic('edit')}Editar</button><button class="btn" onclick="showToast('Producto ${p.act?'desactivado':'activado'}')">${p.act?'Desactivar':'Activar'}</button></div>`:''}
+  </div>`);}
+
+function openOrder(no){const o=orders.find(x=>x.no===no);const m=Math.max(0,o.req-o.cov);
+  openDrawer(`<div class="drawer-h"><div style="flex:1"><span class="eyebrow">${o.no}</span><h3>${o.comp}</h3></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+  <div class="drawer-b">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">${stPill(o.state)}${o.prio!=='—'?pill('Prioridad '+o.prio,o.prio==='Alta'?'danger':'mut'):''}${invTag(o.inv)}</div>
+    <dl class="kv"><dt>Creada</dt><dd>${o.created}</dd><dt>Fecha entrega</dt><dd class="${o.dueD<0?'':''}">${o.due} ${o.dueD<0?'<span class="pill crit" style="margin-left:6px">Vencida</span>':o.dueD<=2&&o.dueD>=0?'<span class="pill warn" style="margin-left:6px">'+o.dueD+'d</span>':''}</dd><dt>Creada por</dt><dd>María Gómez</dd></dl>
+    <div class="sec-h" style="margin:20px 0 10px"><h2 style="font-size:14px">Líneas de la orden</h2><div class="line"></div></div>
+    <div class="card"><div class="tw"><table class="tbl" style="min-width:0"><thead><tr><th>Producto</th><th class="num">Solic.</th><th class="num">Cubierto</th><th class="num">Entreg.</th><th class="num">Pend.</th></tr></thead><tbody>
+      <tr><td>${o.inv==='i'?'Bandeja EPS #2':o.comp.includes('Andina')?'Bloque EPS':'Vaso térmico 8 oz'}<br>${invTag(o.inv)}</td><td class="num">${fmt(o.req)}</td><td class="num" style="color:var(--ok)">${fmt(o.cov)}</td><td class="num">${fmt(o.del)}</td><td class="num ${m>0?'neg':''}">${fmt(o.req-o.del)}</td></tr>
+    </tbody></table></div></div>
+    <div style="margin-top:14px">${covBar(o)}<div class="cov-legend"><span><i class="dotm" style="background:var(--ok)"></i>Cubierto</span><span><i class="dotm" style="background:var(--danger)"></i>Faltante</span></div></div>
+    ${m>0?`<div style="margin-top:14px;padding:11px;background:var(--danger-tint);border-radius:var(--r-sm);font-size:12px;color:var(--danger)">${ic('bell')} Faltan <strong>${fmt(m)} u</strong> para cubrir esta orden.</div>`:''}
+    <div class="sec-h" style="margin:20px 0 10px"><h2 style="font-size:14px">Historial</h2><div class="line"></div></div>
+    <div style="font-size:12.5px;color:var(--ink-2);display:flex;flex-direction:column;gap:8px">
+      <div>• <span class="mono">${o.created}</span> — Orden creada por María Gómez</div>
+      ${o.del>0?`<div>• <span class="mono">06 ago</span> — Entrega parcial de ${fmt(o.del)} u por Juan Pérez</div>`:''}
+      ${o.state==='faltante'?`<div>• <span class="mono">05 ago</span> — Cantidad aumentada 640 → 820 u (recalculó faltante)</div>`:''}
+    </div>
+    ${role==='A'?`<div style="display:flex;gap:8px;margin-top:20px"><button class="btn primary" onclick="closeAll();go('ordenNueva')">${ic('edit')}Editar</button>${role==='A'?`<button class="btn danger" onclick="cancelOrder('${o.no}')">Cancelar orden</button>`:''}</div>`:role==='O'?`<button class="btn primary" style="margin-top:20px" onclick="closeAll();go('entregas')">${ic('truck')}Registrar entrega</button>`:''}
+  </div>`);}
+
+function openMove(i){const m=moves[i];const cls=m.dir==='in'?'in':m.dir==='out'?'out':'adj';const sign=m.dir==='in'?'+':m.dir==='out'?'−':'±';
+  openDrawer(`<div class="drawer-h"><div style="flex:1"><span class="eyebrow">Movimiento MOV-11${88-i}</span><h3>${m.type}</h3></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+  <div class="drawer-b">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <span class="mv-ico ${cls}" style="width:52px;height:52px">${ic(m.dir==='in'?'arrUp':m.dir==='out'?'arrDn':'swap')}</span>
+      <div><div class="mono ${cls==='in'?'':''}" style="font-size:30px;color:var(--${m.dir==='in'?'ok':m.dir==='out'?'danger':'warn'})">${sign}${fmt(m.qty)} u</div><div style="font-weight:600">${m.prod}</div></div>
+    </div>
+    <dl class="kv">
+      <dt>Producto</dt><dd>${m.prod}</dd><dt>Tipo inventario</dt><dd>${invTag(m.inv)}</dd><dt>Tipo movimiento</dt><dd>${m.type}</dd>
+      <dt>Cantidad</dt><dd class="mono">${sign}${fmt(m.qty)} u</dd><dt>Antes</dt><dd class="mono">${fmt(m.before)} u</dd><dt>Después</dt><dd class="mono">${fmt(m.after)} u</dd>
+      <dt>Orden</dt><dd>${m.order}</dd><dt>Empresa</dt><dd>${m.comp}</dd><dt>Usuario</dt><dd>${m.user}</dd><dt>Fecha y hora</dt><dd class="mono">${m.when}</dd>
+    </dl>
+    <div style="margin-top:16px;padding:11px;background:var(--sunken-2);border-radius:var(--r-sm);font-size:12px;color:var(--muted)">${ic('shield')} Movimiento confirmado e inmutable. Las correcciones se hacen con un ajuste compensatorio.</div>
+    ${role==='A'?`<button class="btn block" style="margin-top:16px" onclick="closeAll();go('inventario')">${ic('swap')}Registrar ajuste compensatorio</button>`:''}
+  </div>`);}
+
+function openAlert(i){const a=alerts[i];
+  openDrawer(`<div class="drawer-h"><div style="flex:1"><span class="eyebrow">${ALVL[a.lvl][1]}</span><h3>${a.type}</h3></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+  <div class="drawer-b">
+    ${a.days!==0?`<div style="text-align:center;margin-bottom:16px"><div class="days ${a.days<0?'neg':''}" style="font-size:44px">${Math.abs(a.days)}<span class="u" style="font-size:12px">${a.days<0?'días vencida':'días restantes'}</span></div></div>`:''}
+    <dl class="kv"><dt>Empresa</dt><dd>${a.comp}</dd><dt>Orden</dt><dd class="mono">${a.order}</dd><dt>Producto</dt><dd>${a.prod}</dd><dt>Fecha entrega</dt><dd>${a.due}</dd><dt>Pendiente</dt><dd class="mono">${fmt(a.pend)} u</dd><dt>Faltante</dt><dd class="mono" style="color:${a.falt>0?'var(--danger)':'inherit'}">${fmt(a.falt)} u</dd><dt>Generada</dt><dd>05 ago 2026</dd><dt>Estado</dt><dd>${a.st}</dd></dl>
+    <div style="margin-top:16px;padding:11px;background:var(--warn-tint);border-radius:var(--r-sm);font-size:12px;color:var(--warn)">Marcar como leída no resuelve el problema que la generó.</div>
+    ${a.order!=='—'?`<button class="btn primary block" style="margin-top:16px" onclick="closeAll();openOrder('${a.order}')">Ver orden ${a.order}</button>`:''}
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="btn" style="flex:1" onclick="showToast('Marcada como leída')">Leída</button><button class="btn" style="flex:1" onclick="showToast('Marcada como resuelta')">Resuelta</button><button class="btn ghost" onclick="showToast('Descartada')">Descartar</button></div>
+  </div>`);}
+
+function openCompany(id){const c=companies.find(x=>x.id===id);
+  openDrawer(`<div class="drawer-h"><div style="flex:1"><span class="eyebrow">${c.id}</span><h3>${c.name}</h3></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+  <div class="drawer-b"><div style="margin-bottom:16px">${c.act?pill('Activa','ok'):pill('Inactiva','mut')}</div>
+  <dl class="kv"><dt>NIT</dt><dd class="mono">${c.nit}</dd><dt>Contacto</dt><dd>${c.contact}</dd><dt>Teléfono</dt><dd class="mono">${c.phone}</dd><dt>Correo</dt><dd class="mono" style="font-size:12px">${c.email}</dd></dl>
+  <div class="sec-h" style="margin:20px 0 10px"><h2 style="font-size:14px">Órdenes (${c.orders})</h2><div class="line"></div></div>
+  <div class="mv-list">${orders.filter(o=>o.comp===c.name).map(o=>`<button class="mv" style="grid-template-columns:1fr auto;text-align:left" onclick="openOrder('${o.no}')"><span class="mv-main"><span class="t mono" style="font-size:13px">${o.no}</span><span class="s">Entrega ${o.due} · ${fmt(o.req)} u</span></span>${stPill(o.state)}</button>`).join('')||'<p style="color:var(--muted);font-size:13px">Sin órdenes.</p>'}</div>
+  ${role==='A'?`<button class="btn primary" style="margin-top:20px" onclick="openCompanyForm('${c.id}')">${ic('edit')}Editar empresa</button>`:''}
+  </div>`);}
+
+function openProductForm(sku){const p=sku?PROD.find(x=>x.sku===sku):null;
+  openModal({body:`<div class="modal-h"><h3>${p?'Editar producto':'Nuevo producto'}</h3><div class="spacer" style="flex:1"></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+  <div class="modal-b"><div class="form-grid"><div class="field"><label>Nombre <span class="req">*</span></label><input class="inp" value="${p?p.name:''}" placeholder="Ej. Lámina EPS 1×2m · 20mm"></div>
+  <div class="field"><label>SKU interno</label><input class="inp mono" value="${p?p.sku:''}" placeholder="LAM-2020"></div>
+  <div class="field full"><label>Descripción</label><textarea class="inp" placeholder="Detalle opcional del producto…"></textarea></div>
+  <div class="field"><label>Estado</label><select class="inp"><option>Activo</option><option ${p&&!p.act?'selected':''}>Inactivo</option></select></div></div>
+  <p class="mono" style="font-size:11px;color:var(--muted);margin-top:14px">Solo el administrador puede crear o editar productos.</p></div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeAll()">Cancelar</button><button class="btn primary" onclick="closeAll();showToast('Producto guardado')">Guardar</button></div>`});}
+
+function openCompanyForm(id){const c=id?companies.find(x=>x.id===id):null;
+  openModal({wide:true,body:`<div class="modal-h"><h3>${c?'Editar empresa':'Nueva empresa'}</h3><div class="spacer" style="flex:1"></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+  <div class="modal-b"><div class="form-grid"><div class="field"><label>Nombre <span class="req">*</span></label><input class="inp" value="${c?c.name:''}"></div>
+  <div class="field"><label>NIT / Identificación</label><input class="inp mono" value="${c?c.nit:''}"></div>
+  <div class="field"><label>Contacto</label><input class="inp" value="${c?c.contact:''}"></div>
+  <div class="field"><label>Teléfono</label><input class="inp mono" value="${c?c.phone:''}"></div>
+  <div class="field"><label>Correo</label><input class="inp mono" value="${c?c.email:''}"></div>
+  <div class="field"><label>Estado</label><select class="inp"><option>Activa</option><option>Inactiva</option></select></div></div></div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeAll()">Cancelar</button><button class="btn primary" onclick="closeAll();showToast('Empresa guardada')">Guardar</button></div>`});}
+
+function openUserForm(){openModal({body:`<div class="modal-h"><h3>Nuevo usuario</h3><div style="flex:1"></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+  <div class="modal-b"><div class="form-grid"><div class="field full"><label>Nombre <span class="req">*</span></label><input class="inp"></div>
+  <div class="field full"><label>Correo <span class="req">*</span></label><input class="inp mono"></div>
+  <div class="field"><label>Rol <span class="req">*</span></label><select class="inp"><option>Administrador</option><option>Operador de inventario</option><option>Usuario de consulta</option></select></div>
+  <div class="field"><label>Estado</label><select class="inp"><option>Activo</option><option>Inactivo</option></select></div></div></div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeAll()">Cancelar</button><button class="btn primary" onclick="closeAll();showToast('Usuario creado')">Crear usuario</button></div>`});}
+
+function cancelOrder(no){openModal({body:`<div class="modal-h"><span class="avatar" style="background:var(--danger-tint);color:var(--danger)">${ic('x')}</span><h3>Cancelar ${no}</h3></div>
+  <div class="modal-b"><p style="color:var(--ink-2);margin-bottom:16px">Se liberarán las cantidades pendientes reservadas. Las unidades ya entregadas <strong>no</strong> se revierten. La orden se conserva en el historial.</p>
+  <div class="field"><label>Motivo de cancelación <span class="req">*</span></label><textarea class="inp" placeholder="Explica por qué se cancela…"></textarea></div></div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeAll()">Volver</button><button class="btn danger" onclick="closeAll();showToast('${no} cancelada · reservas liberadas')">Cancelar orden</button></div>`});}
+
+function confirmDeliv(){openModal({body:`<div class="modal-h"><span class="avatar" style="background:var(--brand-tint);color:var(--brand)">${ic('truck')}</span><h3>Confirmar salida</h3></div>
+  <div class="modal-b"><dl class="kv"><dt>Orden</dt><dd class="mono">ORD-2026-0191</dd><dt>Producto</dt><dd>Vaso térmico 8 oz</dd><dt>Cantidad</dt><dd class="mono" style="color:var(--danger)">−600 u</dd><dt>Físico después</dt><dd class="mono">1.500 u</dd></dl>
+  <div style="margin-top:14px;padding:11px;background:var(--danger-tint);border-radius:var(--r-sm);font-size:12px;color:var(--danger)">Acción irreversible: descuenta el físico y genera un movimiento de salida.</div></div>
+  <div class="modal-f"><button class="btn ghost" onclick="closeAll()">Volver</button><button class="btn primary" onclick="closeAll();showToast('Salida registrada · MOV-1190')">Confirmar salida</button></div>`});}
+
+/* ================= TOAST ================= */
+let toastT;
+function showToast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bezel);color:#fff;padding:12px 20px;border-radius:12px;font-size:13.5px;box-shadow:var(--sh-lg);z-index:200;transition:transform .25s;display:flex;align-items:center;gap:10px;max-width:90vw';document.body.appendChild(t);}
+  t.innerHTML=`<span class="led green" style="width:8px;height:8px"></span>${msg}`;requestAnimationFrame(()=>t.style.transform='translateX(-50%) translateY(0)');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.style.transform='translateX(-50%) translateY(80px)',2600);}
+
+/* ================= ROUTER / SHELL ================= */
+function renderNav(){
+  $('#nav').innerHTML=NAV.map(n=>{
+    if(n.sect)return `<div class="sb-sect">${n.sect}</div>`;
+    if(!n.roles.includes(role))return '';
+    const active=current===n.id||(n.id==='home'&&current==='home');
+    return `<a class="nav-i ${active?'active':''}" onclick="go('${n.id}')">${ic(n.icon)}<span>${n.id==='home'?(role==='A'?'Panel':'Inicio'):n.label}</span>${n.badge?`<span class="badge">${n.badge}</span>`:''}</a>`;
+  }).join('');
+}
+function renderReadout(){
+  $('#readout').innerHTML=`
+    <div class="ro-seg"><div class="k"><span class="led green"></span>Físico</div><div class="v" data-c="${totals.fis}">0</div></div>
+    <div class="ro-seg"><div class="k">Reservado</div><div class="v" data-c="${totals.res}">0</div></div>
+    <div class="ro-seg"><div class="k">Disponible</div><div class="v" data-c="${totals.disp}">0</div></div>
+    <div class="ro-seg alert"><div class="k"><span class="led on"></span>Faltante</div><div class="v" data-c="${totals.falt}">0</div></div>`;
+  document.querySelectorAll('#readout .v').forEach(e=>countUp(e,+e.dataset.c));
+}
+function countUp(el,to){const dur=650,t0=performance.now();function f(t){const p=Math.min(1,(t-t0)/dur);el.textContent=fmt(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f);}requestAnimationFrame(f);}
+function render(){
+  const mob=isMobile();
+  const v=(mob&&MVIEWS[current])?MVIEWS[current]:(VIEWS[current]||VIEWS.home);
+  $('#view').innerHTML=v();
+  const meta=PAGEMETA[current]||{crumb:'Panel',title:current};
+  $('#tbCrumb').textContent=current==='home'?(role==='A'?'Panel':'Inicio'):meta.crumb;
+  $('#tbTitle').textContent=current==='home'?(role==='A'?'Panel principal':role==='O'?'Inicio · Operador':'Inicio · Consulta'):meta.title;
+  renderNav();
+  if(typeof renderBottomNav==='function')renderBottomNav();
+  const m=document.querySelector('.main');if(m)m.scrollTop=0;$('#view').scrollTop=0;window.scrollTo(0,0);
+}
+function go(id){
+  // permission guard demo
+  const item=NAV.find(n=>n.id===id);
+  if(item&&!item.roles.includes(role)){current='estados';render();toggleSb(false);return;}
+  current=id;closeAll();render();toggleSb(false);
+}
+function setRole(r){role=r;document.querySelectorAll('#rsw button').forEach(b=>b.classList.toggle('on',b.dataset.role===r));
+  const u=ROLE_USER[r];$('#avat').textContent=u.ini;$('#uname').textContent=u.nm;$('#urole').textContent=ROLE_NAME[r];
+  $('#avat').style.background=r==='A'?'var(--brand)':r==='O'?'var(--accent)':'var(--muted)';
+  // if current view not allowed, go home
+  const item=NAV.find(n=>n.id===current);
+  if(current!=='home'&&current!=='perfil'&&current!=='estados'&&item&&!item.roles.includes(r))current='home';
+  render();}
+function toggleSb(open){$('#sb').classList.toggle('open',open);$('#scrim').classList.toggle('show',open);}
+function enterApp(){$('#login').classList.add('hide');$('#app').classList.add('show');renderReadout();
+  if(typeof syncMobile==='function')syncMobile();
+  if(typeof renderMReadout==='function')renderMReadout();
+  render();}
+
+document.querySelectorAll('#rsw button').forEach(b=>b.onclick=()=>setRole(b.dataset.role));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll();});
+setRole('A');
+</script>
+
+<script>
+/* ==================================================================
+   V2 · MOBILE BEHAVIOUR
+   ================================================================== */
+Object.assign(I,{
+  menu:'<path d="M3 6h18M3 12h18M3 18h18"/>',
+  chevL:'<path d="M15 6l-6 6 6 6"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  desktop:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+  phone:'<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h1.5"/>',
+});
+
+/* ---- mobile readout strip ---- */
+function renderMReadout(){const mr=document.getElementById('mreadout');if(!mr)return;
+  mr.innerHTML=`<div class="seg"><div class="k">Físico</div><div class="v">${fmt(totals.fis)}</div></div>
+    <div class="seg"><div class="k">Reserv.</div><div class="v">${fmt(totals.res)}</div></div>
+    <div class="seg"><div class="k">Dispon.</div><div class="v">${fmt(totals.disp)}</div></div>
+    <div class="seg alert"><div class="k">Faltante</div><div class="v">${fmt(totals.falt)}</div></div>`;}
+
+/* ---- bottom navigation ---- */
+const BOTNAV={
+  A:[{id:'home',ic:'dash',lb:'Panel'},{id:'inventario',ic:'box',lb:'Inventario'},{fab:1},{id:'ordenes',ic:'order',lb:'Órdenes'},{menu:1}],
+  O:[{id:'home',ic:'dash',lb:'Inicio'},{id:'inventario',ic:'box',lb:'Inventario'},{fab:1},{id:'ordenes',ic:'order',lb:'Órdenes'},{menu:1}],
+  C:[{id:'home',ic:'dash',lb:'Inicio'},{id:'inventario',ic:'box',lb:'Inventario'},{id:'ordenes',ic:'order',lb:'Órdenes'},{id:'informes',ic:'chart',lb:'Informes'},{menu:1}],
+};
+function renderBottomNav(){const bn=document.getElementById('botnav');if(!bn)return;
+  bn.innerHTML=BOTNAV[role].map(it=>{
+    if(it.fab)return `<div class="fabslot"><button class="fab" onclick="openQuick()" aria-label="Acción rápida">${ic('plus')}</button></div>`;
+    if(it.menu)return `<a onclick="toggleSb(true)" tabindex="0">${ic('menu')}<span class="lb">Menú</span>${role==='A'&&alertUnread?`<span class="bdg">${alertUnread}</span>`:''}</a>`;
+    const active=current===it.id||((it.id==='home')&&(current==='home'));
+    return `<a class="${active?'active':''}" onclick="go('${it.id}')" tabindex="0">${ic(it.ic)}<span class="lb">${it.lb}</span></a>`;
+  }).join('');
+  labelizeTables();
+}
+
+/* ---- auto label tables → cards on mobile ---- */
+function labelizeTables(){if(!isMobile())return;
+  document.querySelectorAll('.tbl').forEach(t=>{
+    const hs=[...t.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+    t.querySelectorAll('tbody tr').forEach(tr=>{[...tr.children].forEach((td,i)=>{if(hs[i]&&!td.dataset.l)td.dataset.l=hs[i];});});
+  });}
+/* re-labelize when sheets (drawer / modal) open on mobile */
+const _origOpenDrawer=openDrawer;openDrawer=function(h){_origOpenDrawer(h);labelizeTables();};
+const _origOpenModal=openModal;openModal=function(h){_origOpenModal(h);labelizeTables();};
+
+/* ---- quick action (FAB) ---- */
+function openQuick(){
+  if(role==='O'){openDrawer(`<div class="drawer-h"><h3 style="flex:1">¿Qué vas a hacer?</h3><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+    <div class="drawer-b"><div class="bigact">
+      <button class="load" onclick="closeAll();startFlow('cargar')"><span class="ic">${ic('arrUp')}</span><span class="t">Cargar</span><span class="d">Entrada a bodega</span></button>
+      <button class="outb" onclick="closeAll();startFlow('sacar')"><span class="ic">${ic('arrDn')}</span><span class="t">Sacar</span><span class="d">Entrega de orden</span></button>
+    </div></div>`);}
+  else if(role==='A'){go('ordenNueva');}
+}
+
+/* ================= OPERATOR GUIDED FLOWS (cargar / sacar) ================= */
+PAGEMETA.cargar={crumb:'Operación',title:'Cargar inventario'};
+PAGEMETA.sacar={crumb:'Operación',title:'Sacar inventario'};
+var FL={k:null,step:1,product:null,tipo:'n',qty:0,order:null};
+function startFlow(k){FL={k,step:1,product:null,tipo:'n',qty:(k==='cargar'?50:0),order:null};go(k);}
+function flowStep(s){FL.step=s;render();}
+function flowQty(d){FL.qty=Math.max(0,(FL.qty||0)+d);render();}
+function flowSet(k,v){FL[k]=v;render();}
+function flowPickProduct(sku){FL.product=sku;FL.step=2;render();}
+function flowPickOrder(no){FL.order=no;const o=orders.find(x=>x.no===no);FL.qty=Math.max(0,o.req-o.del);FL.step=2;render();}
+function flowConfirm(){showToast(FL.k==='cargar'?`Producción registrada · +${fmt(FL.qty)} u`:`Salida registrada · −${fmt(FL.qty)} u`);FL.step=4;render();}
+function getProd(sku){return PROD.find(p=>p.sku===sku);}
+function flowView(){
+  const isC=FL.k==='cargar';
+  if(FL.step>=4)return flowDone(isC);
+  const titles=isC?['Producto','Cantidad','Confirmar']:['Orden','Cantidad','Confirmar'];
+  const head=`<div class="stephead"><button class="stepback" onclick="${FL.step>1?`flowStep(${FL.step-1})`:`go('home')`}">${ic('chevL')}</button>
+    <span class="lbl">${isC?'Cargar inventario':'Sacar inventario'}<span>Paso ${FL.step} de 3 · ${titles[FL.step-1]}</span></span>
+    <div class="stepdots">${[1,2,3].map(i=>`<i class="${FL.step>=i?'on':''}"></i>`).join('')}</div></div>`;
+  let b='';
+  if(FL.step===1){
+    if(isC){b=`<p style="color:var(--muted);margin-bottom:12px">¿Qué producto vas a cargar?</p><div class="opt-list">${PROD.filter(p=>p.act).map(p=>`<button class="opt" onclick="flowPickProduct('${p.sku}')"><span class="oic">${ic('box')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</span><span class="sub">${p.sku} · físico ${fmt(p.fN)} N</span></span>${ic('chevR')}</button>`).join('')}</div>`;}
+    else{b=`<p style="color:var(--muted);margin-bottom:12px">¿Para qué orden es la salida?</p><div class="opt-list">${orders.filter(o=>['faltante','parcial','cubierta','preparacion'].includes(o.state)).map(o=>`<button class="opt" onclick="flowPickOrder('${o.no}')"><span class="oic">${ic('order')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.comp}</span><span class="sub">${o.no} · pendiente ${fmt(o.req-o.del)} u</span></span>${ic('chevR')}</button>`).join('')}</div>`;}
+  } else if(FL.step===2){
+    const pn=isC?getProd(FL.product).name:orders.find(o=>o.no===FL.order).comp;
+    const ps=isC?FL.product:FL.order;
+    b=`<div class="opt" style="margin-bottom:18px;pointer-events:none"><span class="oic">${ic(isC?'box':'order')}</span><span style="flex:1"><span class="nm" style="display:block">${pn}</span><span class="sub">${ps}</span></span></div>`;
+    if(isC)b+=`<label style="font-size:12.5px;font-weight:600;color:var(--ink-2)">Tipo de inventario</label>
+      <div class="bigtoggle"><button class="${FL.tipo==='n'?'on':''}" onclick="flowSet('tipo','n')">Normal<span class="s">Cualquier cliente</span></button><button class="${FL.tipo==='i'?'on':''}" onclick="flowSet('tipo','i')">Imperfecto<span class="s">Con imperfectos</span></button></div>`;
+    b+=`<label style="font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-top:18px;text-align:center">Cantidad (unidades)</label>
+      <div class="stepper"><button onclick="flowQty(-10)" aria-label="menos 10">−</button><span class="qv">${fmt(FL.qty)}</span><button onclick="flowQty(10)" aria-label="más 10">+</button></div>
+      <div class="qchips"><button onclick="flowQty(-50)">−50</button><button onclick="flowQty(50)">+50</button><button onclick="flowQty(100)">+100</button></div>
+      <div class="sticky-cta"><button class="big-primary ${isC?'':'outb'}" ${FL.qty<=0?'style="opacity:.5;pointer-events:none"':''} onclick="flowStep(3)">Continuar ${ic('chevR')}</button></div>`;
+  } else if(FL.step===3){
+    const pn=isC?getProd(FL.product).name:orders.find(o=>o.no===FL.order).comp;
+    b=`<div class="flow-sum"><dl class="kv" style="padding:14px 0">
+        <dt>${isC?'Producto':'Orden'}</dt><dd>${pn}</dd>
+        ${isC?`<dt>Tipo</dt><dd>${FL.tipo==='i'?'Imperfecto':'Normal'}</dd>`:`<dt>Empresa</dt><dd>${orders.find(o=>o.no===FL.order).comp}</dd>`}
+        <dt>Cantidad</dt><dd class="mono" style="font-size:19px;color:${isC?'var(--ok)':'var(--danger)'}">${isC?'+':'−'}${fmt(FL.qty)} u</dd>
+      </dl></div>
+      <div style="padding:13px 15px;border-radius:12px;background:${isC?'var(--brand-tint)':'var(--accent-tint)'};font-size:13px;color:${isC?'var(--brand-2)':'var(--warn)'};display:flex;gap:9px;align-items:flex-start">${isC?ic('box'):ic('truck')}<span>${isC?`El físico ${FL.tipo==='i'?'imperfecto':'normal'} subirá <b>${fmt(FL.qty)} u</b> y se generará un movimiento de entrada.`:`Saldrán <b>${fmt(FL.qty)} u</b> de bodega; se descuentan de la orden y del reservado.`}</span></div>
+      <div class="sticky-cta"><button class="big-primary ${isC?'':'outb'}" onclick="flowConfirm()">${ic('check')} ${isC?'Confirmar entrada':'Confirmar salida'}</button></div>`;
+  }
+  return head+b;
+}
+function flowDone(isC){return `<div class="flow-done"><div class="chk">${ic('check')}</div><h2>${isC?'Producción registrada':'Salida registrada'}</h2>
+  <p style="color:var(--muted)">${isC?'+':'−'}${fmt(FL.qty)} u · movimiento generado</p>
+  <div style="display:flex;flex-direction:column;gap:10px;margin:26px auto 0;max-width:320px">
+    <button class="big-primary ${isC?'':'outb'}" onclick="startFlow('${isC?'cargar':'sacar'}')">${ic('plus')} ${isC?'Cargar otro':'Sacar otra'}</button>
+    <button class="btn block" onclick="go('home')">Volver al inicio</button></div></div>`;}
+MVIEWS.cargar=()=>{if(FL.k!=='cargar')FL={k:'cargar',step:1,product:null,tipo:'n',qty:50,order:null};return flowView();};
+MVIEWS.sacar=()=>{if(FL.k!=='sacar')FL={k:'sacar',step:1,product:null,tipo:'n',qty:0,order:null};return flowView();};
+MVIEWS.produccion=()=>MVIEWS.cargar();
+MVIEWS.entregas=()=>MVIEWS.sacar();
+
+/* ================= MOBILE HOMES ================= */
+MVIEWS.home=()=>role==='O'?mobOperHome():role==='C'?mobConsultaHome():mobDash();
+function mobDash(){return `
+  <div class="card" style="margin-bottom:14px"><div class="card-h"><h3>Producción</h3><div class="spacer"></div><span class="pill accent"><i class="dot"></i>Imperf. 6,4%</span></div>
+    <div class="card-pad"><div class="tiles" style="grid-template-columns:1fr 1fr 1fr;gap:8px">${miniStat('Hoy','330','u','+12%','up')}${miniStat('Sem','3.610','u','+4%','up')}${miniStat('Mes','14.280','u','−2%','down')}</div></div></div>
+  <div class="sec-h"><h2>Alertas</h2><div class="line"></div><span class="pill danger"><i class="dot"></i>${alertUnread}</span></div>
+  <div class="opt-list">${alerts.slice(0,3).map((a,i)=>`<button class="opt" onclick="openAlert(${i})"><span class="oic" style="background:var(--danger-tint);color:var(--danger)">${ic('bell')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.type}</span><span class="sub">${a.order} · ${a.days<0?Math.abs(a.days)+'d vencida':a.days+'d rest.'}</span></span>${ic('chevR')}</button>`).join('')}</div>
+  <div class="sec-h"><h2>Próximas entregas</h2><div class="line"></div></div>
+  <div class="opt-list">${orders.filter(o=>o.dueD>=0&&o.dueD<10&&o.state!=='borrador').sort((a,b)=>a.dueD-b.dueD).slice(0,4).map(o=>`<button class="opt" onclick="openOrder('${o.no}')"><span class="oic">${ic('order')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.comp}</span><span class="sub">${o.no} · ${fmt(o.req)} u</span></span><span class="ort"><span class="big" style="${o.dueD<=2?'color:var(--danger)':''}">${o.dueD}d</span></span></button>`).join('')}</div>
+  <div class="sec-h"><h2>Movimientos</h2><div class="line"></div><button class="btn sm ghost" onclick="go('movimientos')">Ver todo</button></div>
+  <div class="mv-list">${moves.slice(0,4).map(mvRow).join('')}</div>`;}
+function mobOperHome(){return `
+  <div style="margin-bottom:18px"><span class="eyebrow">Turno · 06 ago 2026</span><h2 style="font-size:23px;margin:6px 0 4px">Hola, Juan 👋</h2><p style="color:var(--ink-2)"><strong>3 órdenes</strong> para preparar · <strong>2 entradas</strong> pendientes</p></div>
+  <div class="bigact">
+    <button class="load" onclick="startFlow('cargar')"><span class="ic">${ic('arrUp')}</span><span class="t">Cargar</span><span class="d">Entrada a bodega</span></button>
+    <button class="outb" onclick="startFlow('sacar')"><span class="ic">${ic('arrDn')}</span><span class="t">Sacar</span><span class="d">Entrega de orden</span></button>
+  </div>
+  <div class="sec-h"><h2>Órdenes a procesar</h2><div class="line"></div></div>
+  <div class="opt-list">${orders.filter(o=>['faltante','parcial','cubierta','preparacion'].includes(o.state)).map(o=>`<button class="opt" onclick="openOrder('${o.no}')"><span class="oic">${ic('order')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.comp}</span><span class="sub">${o.no} · ${o.due} · ${fmt(o.req)} u</span></span>${stPill(o.state)}</button>`).join('')}</div>`;}
+function mobConsultaHome(){return `
+  <div style="margin-bottom:16px"><span class="eyebrow">Solo lectura</span><h2 style="font-size:22px;margin-top:6px">Consulta de bodega</h2></div>
+  <div class="opt-list">${[['box','Inventario','Existencias por producto','inventario'],['order','Órdenes','Estado y entregas','ordenes'],['bldg','Empresas','Clientes y órdenes','empresas'],['chart','Informes','Informes autorizados','informes'],['swap','Movimientos','Historial de bodega','movimientos']].map(x=>`<button class="opt" onclick="go('${x[3]}')"><span class="oic">${ic(x[0])}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block">${x[1]}</span><span class="sub">${x[2]}</span></span>${ic('chevR')}</button>`).join('')}</div>`;}
+
+/* ================= MOBILE TABLE VIEWS → CARDS ================= */
+MVIEWS.inventario=()=>`
+  <div class="toolbar"><div class="search">${ic('search')}<input placeholder="Buscar producto o SKU…"></div></div>
+  <div class="chipset" style="margin-bottom:12px"><button class="chip on">Todos</button><button class="chip">Con faltante</button><button class="chip">Normal</button><button class="chip">Imperfecto</button></div>
+  <div class="opt-list">${PROD.filter(p=>p.act).map(p=>`
+    <button class="opt" onclick="openProduct('${p.sku}')" style="${p.falt>0?'border-left:3px solid var(--danger)':''}">
+      <span class="oic">${ic('box')}</span>
+      <span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</span><span class="sub">${p.sku} · ${fmt(p.fN)} N · ${fmt(p.fI)} I</span></span>
+      <span class="ort"><span class="big" style="${p.disp<0?'color:var(--danger)':''}">${p.disp<0?'−'+fmt(-p.disp):fmt(p.disp)}</span><span class="sub">${p.falt>0?'falta '+fmt(p.falt):'disp.'}</span></span>
+    </button>`).join('')}</div>`;
+MVIEWS.ordenes=()=>`
+  <div class="toolbar"><div class="search">${ic('search')}<input placeholder="Buscar orden o empresa…"></div></div>
+  <div class="chipset" style="margin-bottom:12px"><button class="chip on">Todas</button><button class="chip">Faltantes</button><button class="chip">Próximas</button><button class="chip">Vencidas</button></div>
+  <div class="opt-list">${orders.map(o=>`
+    <button class="opt" style="flex-direction:column;align-items:stretch;gap:11px" onclick="openOrder('${o.no}')">
+      <span style="display:flex;align-items:center;gap:11px;width:100%"><span class="oic" style="width:40px;height:40px">${ic('order')}</span>
+        <span style="min-width:0;flex:1;text-align:left"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.comp}</span><span class="sub">${o.no} · ${o.due==='—'?'sin fecha':o.due}</span></span>
+        ${stPill(o.state)}</span>
+      ${o.req?`<span style="display:block;width:100%">${covBar(o)}</span>`:''}
+    </button>`).join('')}</div>`;
+
+/* ================= DEVICE TOGGLE + SYNC ================= */
+let _wasMobile=null;
+function syncMobile(){const app=document.getElementById('app');if(!app)return;const m=isMobile();app.classList.toggle('is-mobile',m);
+  if(m!==_wasMobile){_wasMobile=m;if(app.classList.contains('show')){renderMReadout();render();}}}
+function setDevice(d){document.body.classList.toggle('dev-mobile',d==='mob');
+  document.querySelectorAll('#devtoggle button').forEach(b=>b.classList.toggle('on',b.dataset.dev===d));
+  requestAnimationFrame(()=>requestAnimationFrame(syncMobile));}
+
+(function initV2(){
+  const app=document.getElementById('app');
+  app.appendChild(document.getElementById('overlay'));
+  app.appendChild(document.getElementById('drawer'));
+  const main=app.querySelector('.main');
+  const mr=document.createElement('div');mr.className='mreadout';mr.id='mreadout';
+  main.insertBefore(mr,document.getElementById('view'));
+  const bn=document.createElement('nav');bn.className='botnav';bn.id='botnav';app.appendChild(bn);
+  const dt=document.createElement('div');dt.id='devtoggle';
+  dt.innerHTML=`<button data-dev="desk" class="on">${ic('desktop')}Escritorio</button><button data-dev="mob">${ic('phone')}Móvil</button>`;
+  document.body.appendChild(dt);
+  dt.querySelectorAll('button').forEach(b=>b.onclick=()=>setDevice(b.dataset.dev));
+  try{new ResizeObserver(()=>syncMobile()).observe(app);}catch(e){}
+  window.addEventListener('resize',syncMobile);
+  syncMobile();
+  /* demo deep-links: ?device=mob&role=O&route=cargar */
+  const q=new URLSearchParams(location.search);
+  if(q.get('device')==='mob'||q.get('role')||q.get('route')){enterApp();
+    if(q.get('role'))setRole(q.get('role').toUpperCase());
+    if(q.get('device')==='mob')setDevice('mob');
+    if(q.get('route'))go(q.get('route'));
+  }
+})();
+</script>
+
