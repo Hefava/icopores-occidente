@@ -203,6 +203,8 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
 .search svg{width:16px;height:16px;color:var(--muted);flex:none}
 .search input{border:none;width:100%;background:none;outline:none}
 .chipset{display:flex;gap:6px;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.ch{font-size:12px;padding:5px 10px;border-radius:8px;background:var(--sunken);border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
 .chip{font-family:var(--mono);font-size:11.5px;padding:6px 11px;border-radius:20px;border:1px solid var(--line);
   background:var(--surface);color:var(--ink-2)}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -272,13 +274,13 @@ textarea.inp{resize:vertical;min-height:72px}
   align-items:center;justify-content:center;padding:20px}
 .overlay.show{display:flex}
 .modal{background:var(--surface);border-radius:var(--r-lg);width:100%;max-width:460px;box-shadow:var(--sh-lg);overflow:hidden;
-  animation:pop .16s ease-out}
+  animation:pop .16s ease-out;max-height:calc(100dvh - 40px);display:flex;flex-direction:column}
 .modal.wide{max-width:720px}
 @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
-.modal-h{padding:18px 20px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:12px}
+.modal-h{padding:18px 20px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:12px;flex:none}
 .modal-h h3{font-size:16px}
-.modal-b{padding:20px}
-.modal-f{padding:14px 20px;border-top:1px solid var(--line-2);display:flex;gap:10px;justify-content:flex-end;background:var(--sunken-2)}
+.modal-b{padding:20px;overflow-y:auto;flex:1 1 auto;min-height:0}
+.modal-f{padding:14px 20px;border-top:1px solid var(--line-2);display:flex;gap:10px;justify-content:flex-end;background:var(--sunken-2);flex:none}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:var(--surface);z-index:61;box-shadow:var(--sh-lg);
   transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
 .drawer.show{transform:none}
@@ -434,7 +436,7 @@ textarea.inp{resize:vertical;min-height:72px}
 #app.is-mobile .drawer .drawer-h{padding-top:22px}
 #app.is-mobile .drawer .drawer-h::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);
   width:42px;height:4px;border-radius:2px;background:var(--line)}
-#app.is-mobile .modal{max-width:none;width:100%;border-radius:22px 22px 0 0;animation:sheetUp .24s cubic-bezier(.4,0,.2,1)}
+#app.is-mobile .modal{max-width:none;width:100%;border-radius:22px 22px 0 0;animation:sheetUp .24s cubic-bezier(.4,0,.2,1);max-height:90dvh}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
 
 /* ===== operator guided-flow components ===== */
@@ -620,6 +622,20 @@ const mpMoves = [
 ];
 const mpConsumoDia = 264600; // g consumidos hoy (demo)
 
+/* ===== MÁQUINAS (todas iguales; consecutivo) ===== */
+// refs = [{sku, dens}] · la densidad de producción se define aquí (por máquina), no al registrar
+let machines = [
+  {id:1, name:'Máquina 1', act:true, refs:[{sku:'LAM-2020',dens:12},{sku:'MCA-2',dens:12}]},
+  {id:2, name:'Máquina 2', act:true, refs:[{sku:'VAS-08',dens:null},{sku:'DOM-30',dens:null}]},
+  {id:3, name:'Máquina 3', act:true, refs:[{sku:'BLQ-5050',dens:20}]},
+  {id:4, name:'Máquina 4', act:true, refs:[{sku:'BAN-N2',dens:null},{sku:'CAV-20L',dens:null}]},
+  {id:5, name:'Máquina 5', act:true, refs:[]},
+];
+const nextMachineId = () => machines.reduce((m,x)=>Math.max(m,x.id),0)+1;
+const machineById = id => machines.find(m=>m.id===+id);
+const machineHasRef = (m,sku) => m.refs.some(r=>r.sku===sku);
+const machineRef = (m,sku) => m.refs.find(r=>r.sku===sku);
+
 const companies = [
   {id:'E-004', name:'Constructora Andina S.A.S', nit:'900.412.556-1', contact:'Laura Mejía', phone:'310 555 0142', email:'compras@andina.co', act:true, orders:4},
   {id:'E-002', name:'Distribuidora El Poblado',  nit:'901.223.900-7', contact:'Andrés Vélez', phone:'315 555 0088', email:'pedidos@elpoblado.co', act:true, orders:3},
@@ -720,6 +736,7 @@ const NAV = [
   {id:'alertas', label:'Alertas',     icon:'bell',   roles:'A', badge:alertUnread},
   {sect:'Catálogo'},
   {id:'productos',label:'Productos',  icon:'tag',    roles:'AOC'},
+  {id:'maquinas', label:'Máquinas',   icon:'machine',roles:'A'},
   {id:'empresas',label:'Empresas',    icon:'bldg',   roles:'AC'},
   {sect:'Análisis'},
   {id:'informes',label:'Informes',    icon:'chart',  roles:'AC'},
@@ -935,22 +952,80 @@ function calcMp(){const raw=(document.getElementById('mpQty')?.value||'0').repla
   const el=document.getElementById('mpAfter'); if(el)el.textContent=after.toLocaleString('es-CO',{maximumFractionDigits:1})+' kg';}
 
 /* ---- PRODUCCION (F1) ---- */
+/* ---- MÁQUINAS ---- */
+PAGEMETA.maquinas={crumb:'Catálogo',title:'Máquinas'};
+VIEWS.maquinas=()=>`
+  <div class="toolbar">
+    <div class="search">${ic('search')}<input placeholder="Buscar máquina…"></div>
+    <div class="spacer"></div>
+    ${role==='A'?`<button class="btn primary" onclick="createMachine()">${ic('plus')}Crear máquina</button>`:''}
+  </div>
+  <p class="mono" style="font-size:12px;color:var(--muted);margin-bottom:16px">▸ Todas las máquinas son iguales. Aquí defines cuáles existen y qué referencias produce cada una ahora; eso agiliza el registro de producción.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+    ${machines.map(m=>`
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <span style="width:44px;height:44px;border-radius:12px;background:var(--brand-tint);color:var(--brand);display:grid;place-items:center;flex:none">${ic('machine')}</span>
+          <div style="flex:1;min-width:0"><div style="font-weight:680;font-size:16px">${m.name}</div><div class="mono" style="font-size:11px;color:var(--muted)">${m.refs.length} referencia${m.refs.length===1?'':'s'} activa${m.refs.length===1?'':'s'}</div></div>
+          ${m.act?pill('Activa','ok'):pill('Inactiva','mut')}
+        </div>
+        <div class="eyebrow" style="margin-bottom:9px">Produciendo ahora</div>
+        ${m.refs.length?`<div class="chips">${m.refs.map(r=>{const p=getProd(r.sku);return `<span class="ch">${p?p.name:r.sku}${p&&p.dv?` · <span style="color:var(--brand);font-family:var(--mono)">d${r.dens}</span>`:''}</span>`}).join('')}</div>`:'<p style="color:var(--faint);font-size:13px">Sin referencias asignadas.</p>'}
+        ${role==='A'?`<button class="btn block" style="margin-top:16px" onclick="openMachineRefs(${m.id})">${ic('edit')}Editar referencias</button>`:''}
+      </div>`).join('')}
+  </div>`;
+MVIEWS.maquinas=VIEWS.maquinas;
+function createMachine(){const id=nextMachineId();machines.push({id,name:'Máquina '+id,act:true,refs:[]});showToast('Máquina '+id+' creada');render();openMachineRefs(id);}
+function openMachineRefs(id){const m=machineById(id);if(!m)return;
+  openModal({wide:true,body:`<div class="modal-h"><h3>${m.name} · referencias</h3><div style="flex:1"></div><button class="iconbtn" onclick="closeAll()">${ic('x')}</button></div>
+    <div class="modal-b"><p style="color:var(--muted);margin-bottom:14px">Marca las referencias que <strong>${m.name}</strong> está produciendo ahora y, si aplica, la <strong>densidad</strong> con la que produce cada una. Se usarán al registrar producción de esta máquina.</p>
+    <div class="opt-list">${PROD.filter(p=>p.act).map(p=>{const on=machineHasRef(m,p.sku);const r=machineRef(m,p.sku);return `
+      <div class="opt" style="flex-direction:column;align-items:stretch;padding:0;overflow:hidden;${on?'border-color:var(--brand)':''}">
+        <button onclick="toggleMachineRef(${m.id},'${p.sku}')" style="display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:${on?'var(--brand-tint)':'transparent'};padding:13px 14px">
+          <span class="oic">${ic('box')}</span>
+          <span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</span><span class="sub">${p.sku} · ${p.dv?'densidad variable':'consumo fijo'}</span></span>
+          <span style="width:26px;height:26px;border-radius:8px;border:1.5px solid ${on?'var(--brand)':'var(--line)'};background:${on?'var(--brand)':'transparent'};color:#fff;display:grid;place-items:center;flex:none">${on?ic('check'):''}</span>
+        </button>
+        ${on&&p.dv?`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px 12px 55px;border-top:1px solid var(--line-2)"><span style="font-size:12.5px;color:var(--ink-2)">Densidad de producción</span><select class="inp mono" style="width:96px" onchange="setMachineRefDens(${m.id},'${p.sku}',this.value)"><option ${r.dens==12?'selected':''}>12</option><option ${r.dens==15?'selected':''}>15</option><option ${r.dens==20?'selected':''}>20</option><option ${r.dens==25?'selected':''}>25</option></select></div>`:''}
+      </div>`}).join('')}</div></div>
+    <div class="modal-f"><button class="btn ghost" onclick="closeAll();render()">Cerrar</button><button class="btn primary" onclick="closeAll();render();showToast('Referencias de ${m.name} actualizadas')">Guardar</button></div>`});}
+function toggleMachineRef(id,sku){const m=machineById(id);const i=m.refs.findIndex(r=>r.sku===sku);
+  if(i>=0)m.refs.splice(i,1); else {const p=getProd(sku);m.refs.push({sku,dens:p.dv?(p.dens||12):null});}
+  openMachineRefs(id);}
+function setMachineRefDens(id,sku,d){const r=machineRef(machineById(id),sku);if(r)r.dens=+d;}
+
+/* ---- PRODUCCIÓN por máquina ---- */
+let prodMachine=null;
 PAGEMETA.produccion={crumb:'Operación',title:'Registrar producción'};
-VIEWS.produccion=()=>`
+VIEWS.produccion=()=>{
+  const m = prodMachine ? machineById(prodMachine) : null;
+  const anyDv = m && m.refs.some(r=>getProd(r.sku).dv);
+  return `
   <div class="two-col">
     <div class="card">
-      <div class="card-h"><h3>Nueva entrada por producción</h3><span class="sub">Aumenta el inventario físico</span></div>
+      <div class="card-h"><h3>Nueva entrada por producción</h3><span class="sub">Por máquina</span></div>
       <div class="card-pad">
-        <div class="form-grid">
-          <div class="field"><label>Producto <span class="req">*</span></label>
-            <select class="inp"><option>Selecciona un producto activo…</option>${PROD.filter(p=>p.act).map(p=>`<option>${p.sku} · ${p.name}</option>`).join('')}</select>
-            <span class="hint">Solo productos activos creados por el administrador.</span></div>
-          <div class="field"><label>Fecha de producción <span class="req">*</span></label><input class="inp mono" type="date" value="2026-08-06"></div>
-          <div class="field"><label>Unidades normales <span class="req">*</span></label><input class="inp mono" id="pN" value="120" oninput="calcProd()"></div>
-          <div class="field"><label>Unidades con imperfectos</label><input class="inp mono" id="pI" value="8" oninput="calcProd()"></div>
-          <div class="field"><label>Densidad <span class="hint" style="font-weight:400">· solo construcción</span></label><select class="inp mono" id="pDens" onchange="calcProd()"><option value="12">12 (estándar)</option><option value="15">15</option><option value="20">20</option><option value="25">25</option></select><span class="hint">Escala la materia prima consumida.</span></div>
-          <div class="field full"><label>Observaciones</label><textarea class="inp" placeholder="Notas del turno, molde, novedades…"></textarea></div>
-        </div>
+        <div class="field" style="margin-bottom:16px"><label>Máquina <span class="req">*</span></label>
+          <select class="inp" onchange="prodMachine=this.value?+this.value:null;render()">
+            <option value="">Selecciona una máquina…</option>
+            ${machines.filter(x=>x.act).map(x=>`<option value="${x.id}" ${prodMachine==x.id?'selected':''}>${x.name} · ${x.refs.length} ref.</option>`).join('')}
+          </select>
+          <span class="hint">Se mostrarán las referencias que produce esa máquina.</span></div>
+        ${!m ? `<div class="empty" style="padding:34px 20px"><div class="ic">${ic('machine')}</div><h3>Elige una máquina</h3><p>Selecciónala para ver sus referencias activas y registrar lo producido de cada una.</p></div>`
+          : (!m.refs.length ? `<div class="empty" style="padding:34px 20px"><div class="ic">${ic('machine')}</div><h3>Sin referencias asignadas</h3><p>${m.name} aún no tiene referencias parametrizadas.</p>${role==='A'?`<button class="btn" onclick="openMachineRefs(${m.id})">Asignar referencias</button>`:''}</div>`
+          : `
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span class="eyebrow">Referencias que produce ${m.name}</span><span class="mono" style="font-size:11px;color:var(--muted)">normal · imperfecto</span></div>
+          <div class="tw"><table class="tbl" style="min-width:${anyDv?'500':'440'}px"><thead><tr><th>Referencia</th><th class="num">Normales</th><th class="num">Imperfectas</th>${anyDv?'<th>Densidad</th>':''}</tr></thead><tbody>
+            ${m.refs.map(r=>{const p=getProd(r.sku),sku=r.sku;return `<tr>
+              <td><div class="prod-cell"><span class="sku">${sku}</span><strong>${p.name}</strong></div></td>
+              <td class="num"><input class="inp mono" style="width:92px;text-align:right" id="mn_${sku}" value="0" oninput="calcMachineProd()"></td>
+              <td class="num"><input class="inp mono" style="width:92px;text-align:right" id="mi_${sku}" value="0" oninput="calcMachineProd()"></td>
+              ${anyDv?`<td>${p.dv?`<span class="pill brand" style="padding:2px 9px">d${r.dens}</span>`:'<span style="color:var(--faint)">fija</span>'}</td>`:''}
+            </tr>`}).join('')}
+          </tbody></table></div>
+          <p class="mono" style="font-size:11px;color:var(--muted);margin-top:8px">▸ La densidad se toma de la parametrización de la máquina.</p>
+          <div class="field full" style="margin-top:14px"><label>Fecha de producción</label><input class="inp mono" type="date" value="2026-08-06"></div>
+          <div class="field full" style="margin-top:12px"><label>Observaciones</label><textarea class="inp" placeholder="Novedades del turno…"></textarea></div>`)}
       </div>
     </div>
     <div>
@@ -958,26 +1033,31 @@ VIEWS.produccion=()=>`
         <div class="card-h"><h3>Resumen</h3></div>
         <div class="card-pad">
           <dl class="kv">
-            <dt>Normal</dt><dd class="mono" id="sN">120 u</dd>
-            <dt>Imperfecto</dt><dd class="mono" id="sI" style="color:var(--warn)">8 u</dd>
-            <dt>% imperfectos</dt><dd class="mono" id="sPct">6,3%</dd>
-            <dt>Materia prima</dt><dd class="mono" id="sMp" style="color:var(--brand)">61,4 kg</dd>
+            <dt>Máquina</dt><dd id="pmMac">${m?m.name:'—'}</dd>
+            <dt>Referencias</dt><dd class="mono" id="pmRefs">0</dd>
+            <dt>Total normal</dt><dd class="mono" id="pmN">0 u</dd>
+            <dt>Total imperfecto</dt><dd class="mono" id="pmI" style="color:var(--warn)">0 u</dd>
+            <dt>Materia prima</dt><dd class="mono" id="pmMp" style="color:var(--brand)">0 kg</dd>
           </dl>
           <div style="height:1px;background:var(--line);margin:14px 0"></div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="eyebrow">Total producido</span><span class="mono" id="sTot" style="font-size:26px">128 u</span></div>
-          <div style="margin-top:14px;padding:11px;background:var(--brand-tint);border-radius:var(--r-sm);font-size:12px;color:var(--brand-2)">${ic('box','',)} Al confirmar, el físico normal sube <strong id="sImpN">120</strong> u y el imperfecto <strong id="sImpI">8</strong> u.<div style="margin-top:8px">${ic('mat')} Descuenta <strong id="sMp2">61,4 kg</strong> de materia prima (densidad <strong id="sDens2">12</strong>).</div></div>
-          <button class="btn primary block" style="margin-top:16px" onclick="showToast('Producción registrada · movimiento MOV-1189 generado')">Confirmar entrada</button>
-          <p class="mono" style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">Total = normales + imperfectos ✓</p>
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="eyebrow">Total producido</span><span class="mono" id="pmTot" style="font-size:26px">0 u</span></div>
+          <div style="margin-top:14px;padding:11px;background:var(--brand-tint);border-radius:var(--r-sm);font-size:12px;color:var(--brand-2)">${ic('mat')} Sube el inventario de las referencias con cantidad y descuenta la materia prima correspondiente.</div>
+          <button class="btn primary block" style="margin-top:16px" ${m&&m.refs.length?'':'disabled'} onclick="showToast('Producción registrada · ${m?m.name:''}')">Confirmar entrada</button>
+          <p class="mono" style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">Registra todas las referencias de la máquina a la vez.</p>
         </div>
       </div>
     </div>
   </div>`;
-function calcProd(){const n=+($('#pN').value||0),i=+($('#pI').value||0),t=n+i;const pct=t?(i/t*100):0;
-  const dens=+((document.getElementById('pDens')||{}).value||12), mpBase=480, densStd=12;
-  const mpK=((t*mpBase*(dens/densStd))/1000).toLocaleString('es-CO',{maximumFractionDigits:1})+' kg';
-  $('#sN').textContent=fmt(n)+' u';$('#sI').textContent=fmt(i)+' u';$('#sTot').textContent=fmt(t)+' u';
-  $('#sPct').textContent=pct.toFixed(1).replace('.',',')+'%';$('#sImpN').textContent=fmt(n);$('#sImpI').textContent=fmt(i);
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;}; set('sMp',mpK);set('sMp2',mpK);set('sDens2',dens);}
+};
+function calcMachineProd(){const m=prodMachine?machineById(prodMachine):null;if(!m)return;
+  let tn=0,ti=0,mpG=0,refs=0;
+  m.refs.forEach(r=>{const p=getProd(r.sku),sku=r.sku;
+    const n=+((document.getElementById('mn_'+sku)||{}).value||0), i=+((document.getElementById('mi_'+sku)||{}).value||0);
+    const dens=r.dens||p.dens||12;
+    if(n||i)refs++; tn+=n; ti+=i; const per=p.dv?p.mp*(dens/(p.dens||12)):p.mp; mpG+=(n+i)*per;});
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('pmRefs',refs); set('pmN',fmt(tn)+' u'); set('pmI',fmt(ti)+' u'); set('pmTot',fmt(tn+ti)+' u');
+  set('pmMp',(mpG/1000).toLocaleString('es-CO',{maximumFractionDigits:1})+' kg');}
 
 /* ---- MOVIMIENTOS (G1) ---- */
 PAGEMETA.movimientos={crumb:'Operación',title:'Historial de movimientos'};
@@ -1421,6 +1501,7 @@ setRole('A');
    V2 · MOBILE BEHAVIOUR
    ================================================================== */
 Object.assign(I,{
+  machine:'<rect x="3" y="9" width="13" height="11" rx="1.5"/><path d="M16 12h3l2 2v6h-5"/><path d="M6 9V6a2 2 0 012-2h2a2 2 0 012 2v3"/><path d="M7 14h.01M11 14h.01"/>',
   mat:'<path d="M5 8c0-1.7 3.1-3 7-3s7 1.3 7 3-3.1 3-7 3-7-1.3-7-3z"/><path d="M5 8v8c0 1.7 3.1 3 7 3s7-1.3 7-3V8"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
   gauge:'<path d="M12 13l4-3"/><path d="M4 18a8 8 0 1116 0"/><circle cx="12" cy="13" r="1.4" fill="currentColor" stroke="none"/>',
   plusg:'<path d="M12 5v14M5 12h14"/>',
@@ -1477,55 +1558,86 @@ function openQuick(){
 /* ================= OPERATOR GUIDED FLOWS (cargar / sacar) ================= */
 PAGEMETA.cargar={crumb:'Operación',title:'Cargar inventario'};
 PAGEMETA.sacar={crumb:'Operación',title:'Sacar inventario'};
-var FL={k:null,step:1,product:null,tipo:'n',qty:0,order:null};
-function startFlow(k){FL={k,step:1,product:null,tipo:'n',qty:(k==='cargar'?50:0),order:null};go(k);}
+var FL={k:null,step:1,machine:null,qtys:{},order:null,qty:0,notes:'',doneTotal:0};
+function newFL(k){return {k,step:1,machine:null,qtys:{},order:null,qty:0,notes:'',doneTotal:0};}
+function startFlow(k){FL=newFL(k);go(k);}
 function flowStep(s){FL.step=s;render();}
 function flowQty(d){FL.qty=Math.max(0,(FL.qty||0)+d);render();}
-function flowSet(k,v){FL[k]=v;render();}
-function flowPickProduct(sku){FL.product=sku;FL.step=2;render();}
 function flowPickOrder(no){FL.order=no;const o=orders.find(x=>x.no===no);FL.qty=Math.max(0,o.req-o.del);FL.step=2;render();}
-function flowConfirm(){showToast(FL.k==='cargar'?`Producción registrada · +${fmt(FL.qty)} u`:`Salida registrada · −${fmt(FL.qty)} u`);FL.step=4;render();}
+function flowPickMachine(id){FL.machine=+id;const m=machineById(id);FL.qtys={};m.refs.forEach(r=>FL.qtys[r.sku]={n:0,i:0,dens:(r.dens||getProd(r.sku).dens||12)});FL.step=2;render();}
+function flowInput(sku,f,v){if(!FL.qtys[sku])FL.qtys[sku]={n:0,i:0,dens:12};FL.qtys[sku][f]=Math.max(0,+v||0);flowRecalcMobile();}
+function flowRecalcMobile(){let t=0;Object.values(FL.qtys).forEach(q=>t+=(q.n||0)+(q.i||0));const e=document.getElementById('flowTot');if(e)e.textContent=fmt(t)+' u';}
+function flowTotals(){let tn=0,ti=0,mpG=0;const rows=[];const m=machineById(FL.machine);if(m)m.refs.forEach(r=>{const p=getProd(r.sku),q=FL.qtys[r.sku]||{n:0,i:0,dens:r.dens||p.dens||12};if(q.n||q.i){rows.push({p,q});tn+=q.n;ti+=q.i;const per=p.dv?p.mp*(q.dens/(p.dens||12)):p.mp;mpG+=(q.n+q.i)*per;}});return {rows,tn,ti,mpG};}
+function flowConfirm(){if(FL.k==='cargar'){const {tn,ti}=flowTotals();FL.doneTotal=tn+ti;showToast('Producción registrada · +'+fmt(FL.doneTotal)+' u');}
+  else {FL.doneTotal=FL.qty;showToast('Salida registrada · −'+fmt(FL.qty)+' u');} FL.step=4;render();}
 function getProd(sku){return PROD.find(p=>p.sku===sku);}
 function flowView(){
   const isC=FL.k==='cargar';
   if(FL.step>=4)return flowDone(isC);
-  const titles=isC?['Producto','Cantidad','Confirmar']:['Orden','Cantidad','Confirmar'];
+  const titles=isC?['Máquina','Cantidades','Confirmar']:['Orden','Cantidad','Confirmar'];
   const head=`<div class="stephead"><button class="stepback" onclick="${FL.step>1?`flowStep(${FL.step-1})`:`go('home')`}">${ic('chevL')}</button>
-    <span class="lbl">${isC?'Cargar inventario':'Sacar inventario'}<span>Paso ${FL.step} de 3 · ${titles[FL.step-1]}</span></span>
+    <span class="lbl">${isC?'Cargar producción':'Sacar inventario'}<span>Paso ${FL.step} de 3 · ${titles[FL.step-1]}</span></span>
     <div class="stepdots">${[1,2,3].map(i=>`<i class="${FL.step>=i?'on':''}"></i>`).join('')}</div></div>`;
   let b='';
-  if(FL.step===1){
-    if(isC){b=`<p style="color:var(--muted);margin-bottom:12px">¿Qué producto vas a cargar?</p><div class="opt-list">${PROD.filter(p=>p.act).map(p=>`<button class="opt" onclick="flowPickProduct('${p.sku}')"><span class="oic">${ic('box')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</span><span class="sub">${p.sku} · físico ${fmt(p.fN)} N</span></span>${ic('chevR')}</button>`).join('')}</div>`;}
-    else{b=`<p style="color:var(--muted);margin-bottom:12px">¿Para qué orden es la salida?</p><div class="opt-list">${orders.filter(o=>['faltante','parcial','cubierta','preparacion'].includes(o.state)).map(o=>`<button class="opt" onclick="flowPickOrder('${o.no}')"><span class="oic">${ic('order')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.comp}</span><span class="sub">${o.no} · pendiente ${fmt(o.req-o.del)} u</span></span>${ic('chevR')}</button>`).join('')}</div>`;}
-  } else if(FL.step===2){
-    const pn=isC?getProd(FL.product).name:orders.find(o=>o.no===FL.order).comp;
-    const ps=isC?FL.product:FL.order;
-    b=`<div class="opt" style="margin-bottom:18px;pointer-events:none"><span class="oic">${ic(isC?'box':'order')}</span><span style="flex:1"><span class="nm" style="display:block">${pn}</span><span class="sub">${ps}</span></span></div>`;
-    if(isC)b+=`<label style="font-size:12.5px;font-weight:600;color:var(--ink-2)">Tipo de inventario</label>
-      <div class="bigtoggle"><button class="${FL.tipo==='n'?'on':''}" onclick="flowSet('tipo','n')">Normal<span class="s">Cualquier cliente</span></button><button class="${FL.tipo==='i'?'on':''}" onclick="flowSet('tipo','i')">Imperfecto<span class="s">Con imperfectos</span></button></div>`;
-    b+=`<label style="font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-top:18px;text-align:center">Cantidad (unidades)</label>
-      <div class="stepper"><button onclick="flowQty(-10)" aria-label="menos 10">−</button><span class="qv">${fmt(FL.qty)}</span><button onclick="flowQty(10)" aria-label="más 10">+</button></div>
-      <div class="qchips"><button onclick="flowQty(-50)">−50</button><button onclick="flowQty(50)">+50</button><button onclick="flowQty(100)">+100</button></div>
-      <div class="sticky-cta"><button class="big-primary ${isC?'':'outb'}" ${FL.qty<=0?'style="opacity:.5;pointer-events:none"':''} onclick="flowStep(3)">Continuar ${ic('chevR')}</button></div>`;
-  } else if(FL.step===3){
-    const pn=isC?getProd(FL.product).name:orders.find(o=>o.no===FL.order).comp;
-    b=`<div class="flow-sum"><dl class="kv" style="padding:14px 0">
-        <dt>${isC?'Producto':'Orden'}</dt><dd>${pn}</dd>
-        ${isC?`<dt>Tipo</dt><dd>${FL.tipo==='i'?'Imperfecto':'Normal'}</dd>`:`<dt>Empresa</dt><dd>${orders.find(o=>o.no===FL.order).comp}</dd>`}
-        <dt>Cantidad</dt><dd class="mono" style="font-size:19px;color:${isC?'var(--ok)':'var(--danger)'}">${isC?'+':'−'}${fmt(FL.qty)} u</dd>
-      </dl></div>
-      <div style="padding:13px 15px;border-radius:12px;background:${isC?'var(--brand-tint)':'var(--accent-tint)'};font-size:13px;color:${isC?'var(--brand-2)':'var(--warn)'};display:flex;gap:9px;align-items:flex-start">${isC?ic('box'):ic('truck')}<span>${isC?`El físico ${FL.tipo==='i'?'imperfecto':'normal'} subirá <b>${fmt(FL.qty)} u</b> y se generará un movimiento de entrada.`:`Saldrán <b>${fmt(FL.qty)} u</b> de bodega; se descuentan de la orden y del reservado.`}</span></div>
-      <div class="sticky-cta"><button class="big-primary ${isC?'':'outb'}" onclick="flowConfirm()">${ic('check')} ${isC?'Confirmar entrada':'Confirmar salida'}</button></div>`;
+  if(isC){
+    /* ===== CARGAR por máquina ===== */
+    if(FL.step===1){
+      b=`<p style="color:var(--muted);margin-bottom:12px">¿En qué máquina se produjo?</p><div class="opt-list">${machines.filter(m=>m.act).map(m=>`<button class="opt" onclick="flowPickMachine(${m.id})" ${!m.refs.length?'style="opacity:.55"':''}><span class="oic">${ic('machine')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block">${m.name}</span><span class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block">${m.refs.length?m.refs.map(r=>getProd(r.sku).name).join(' · '):'sin referencias'}</span></span>${ic('chevR')}</button>`).join('')}</div>`;
+    } else if(FL.step===2){
+      const m=machineById(FL.machine);
+      b=`<div class="opt" style="margin-bottom:14px;pointer-events:none"><span class="oic">${ic('machine')}</span><span style="flex:1"><span class="nm" style="display:block">${m.name}</span><span class="sub">${m.refs.length} referencia(s) · escribe lo producido</span></span></div>
+        <div class="opt-list">${m.refs.map(r=>{const p=getProd(r.sku),sku=r.sku,q=FL.qtys[sku]||{n:0,i:0,dens:r.dens||p.dens||12};return `
+          <div class="card card-pad" style="padding:14px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+              <div style="font-weight:640;font-size:14px;min-width:0">${p.name}<span style="display:block;font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400">${sku}</span></div>
+              ${p.dv?`<span class="pill brand" style="padding:2px 9px;flex:none">d${r.dens}</span>`:''}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px">
+              <div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Normales</label><input class="inp mono" inputmode="numeric" value="${q.n||''}" placeholder="0" oninput="flowInput('${sku}','n',this.value)"></div>
+              <div><label style="font-size:11px;color:var(--warn);display:block;margin-bottom:4px">Imperfectas</label><input class="inp mono" inputmode="numeric" value="${q.i||''}" placeholder="0" oninput="flowInput('${sku}','i',this.value)"></div>
+            </div>
+          </div>`}).join('')}</div>
+        <div style="margin-top:14px"><label style="font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:6px">Observaciones</label><textarea class="inp" placeholder="Novedades del turno…" oninput="FL.notes=this.value">${FL.notes||''}</textarea></div>
+        <div class="sticky-cta"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-family:var(--mono);font-size:12px;color:var(--muted)"><span>TOTAL PRODUCIDO</span><span id="flowTot" style="font-size:17px;color:var(--ink)">${fmt(flowTotals().tn+flowTotals().ti)} u</span></div>
+          <button class="big-primary" onclick="flowStep(3)">Continuar ${ic('chevR')}</button></div>`;
+    } else if(FL.step===3){
+      const m=machineById(FL.machine), {rows,tn,ti,mpG}=flowTotals();
+      b=`<div class="flow-sum"><dl class="kv" style="padding:12px 0">
+          <dt>Máquina</dt><dd>${m.name}</dd>
+          ${rows.length?rows.map(r=>`<dt style="text-transform:none;letter-spacing:0;font-family:var(--sans);color:var(--ink-2);font-weight:500">${r.p.name}</dt><dd class="mono">${fmt(r.q.n)} N · ${fmt(r.q.i)} I</dd>`).join(''):'<dt>—</dt><dd>sin cantidades</dd>'}
+          <dt>Total</dt><dd class="mono" style="font-size:18px;color:var(--ok)">+${fmt(tn+ti)} u</dd>
+        </dl></div>
+        <div style="padding:13px 15px;border-radius:12px;background:var(--brand-tint);font-size:13px;color:var(--brand-2);display:flex;gap:9px;align-items:flex-start">${ic('mat')}<span>Sube el inventario de <b>${rows.length}</b> referencia(s) y descuenta <b>${(mpG/1000).toLocaleString('es-CO',{maximumFractionDigits:1})} kg</b> de materia prima.</span></div>
+        ${FL.notes?`<div style="margin-top:10px;font-size:12.5px;color:var(--ink-2)"><span class="eyebrow">Observaciones</span><p style="margin-top:4px">${FL.notes}</p></div>`:''}
+        <div class="sticky-cta"><button class="big-primary" ${tn+ti<=0?'style="opacity:.5;pointer-events:none"':''} onclick="flowConfirm()">${ic('check')} Confirmar entrada</button></div>`;
+    }
+  } else {
+    /* ===== SACAR (contra orden) ===== */
+    if(FL.step===1){
+      b=`<p style="color:var(--muted);margin-bottom:12px">¿Para qué orden es la salida?</p><div class="opt-list">${orders.filter(o=>['faltante','parcial','cubierta','preparacion'].includes(o.state)).map(o=>`<button class="opt" onclick="flowPickOrder('${o.no}')"><span class="oic">${ic('order')}</span><span style="min-width:0;flex:1"><span class="nm" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.comp}</span><span class="sub">${o.no} · pendiente ${fmt(o.req-o.del)} u</span></span>${ic('chevR')}</button>`).join('')}</div>`;
+    } else if(FL.step===2){
+      const o=orders.find(x=>x.no===FL.order);
+      b=`<div class="opt" style="margin-bottom:18px;pointer-events:none"><span class="oic">${ic('order')}</span><span style="flex:1"><span class="nm" style="display:block">${o.comp}</span><span class="sub">${o.no}</span></span></div>
+        <label style="font-size:12.5px;font-weight:600;color:var(--ink-2);display:block;text-align:center">Cantidad a entregar</label>
+        <div class="stepper"><button onclick="flowQty(-10)" aria-label="menos 10">−</button><span class="qv">${fmt(FL.qty)}</span><button onclick="flowQty(10)" aria-label="más 10">+</button></div>
+        <div class="qchips"><button onclick="flowQty(-50)">−50</button><button onclick="flowQty(50)">+50</button><button onclick="flowQty(100)">+100</button></div>
+        <div class="sticky-cta"><button class="big-primary outb" ${FL.qty<=0?'style="opacity:.5;pointer-events:none"':''} onclick="flowStep(3)">Continuar ${ic('chevR')}</button></div>`;
+    } else if(FL.step===3){
+      const o=orders.find(x=>x.no===FL.order);
+      b=`<div class="flow-sum"><dl class="kv" style="padding:14px 0"><dt>Orden</dt><dd class="mono">${o.no}</dd><dt>Empresa</dt><dd>${o.comp}</dd><dt>Cantidad</dt><dd class="mono" style="font-size:19px;color:var(--danger)">−${fmt(FL.qty)} u</dd></dl></div>
+        <div style="padding:13px 15px;border-radius:12px;background:var(--accent-tint);font-size:13px;color:var(--warn);display:flex;gap:9px;align-items:flex-start">${ic('truck')}<span>Saldrán <b>${fmt(FL.qty)} u</b> de bodega; se descuentan de la orden y del reservado.</span></div>
+        <div class="sticky-cta"><button class="big-primary outb" onclick="flowConfirm()">${ic('check')} Confirmar salida</button></div>`;
+    }
   }
   return head+b;
 }
 function flowDone(isC){return `<div class="flow-done"><div class="chk">${ic('check')}</div><h2>${isC?'Producción registrada':'Salida registrada'}</h2>
-  <p style="color:var(--muted)">${isC?'+':'−'}${fmt(FL.qty)} u · movimiento generado</p>
+  <p style="color:var(--muted)">${isC?'+':'−'}${fmt(FL.doneTotal)} u · movimiento generado</p>
   <div style="display:flex;flex-direction:column;gap:10px;margin:26px auto 0;max-width:320px">
-    <button class="big-primary ${isC?'':'outb'}" onclick="startFlow('${isC?'cargar':'sacar'}')">${ic('plus')} ${isC?'Cargar otro':'Sacar otra'}</button>
+    <button class="big-primary ${isC?'':'outb'}" onclick="startFlow('${isC?'cargar':'sacar'}')">${ic('plus')} ${isC?'Cargar otra':'Sacar otra'}</button>
     <button class="btn block" onclick="go('home')">Volver al inicio</button></div></div>`;}
-MVIEWS.cargar=()=>{if(FL.k!=='cargar')FL={k:'cargar',step:1,product:null,tipo:'n',qty:50,order:null};return flowView();};
-MVIEWS.sacar=()=>{if(FL.k!=='sacar')FL={k:'sacar',step:1,product:null,tipo:'n',qty:0,order:null};return flowView();};
+MVIEWS.cargar=()=>{if(FL.k!=='cargar')FL=newFL('cargar');return flowView();};
+MVIEWS.sacar=()=>{if(FL.k!=='sacar')FL=newFL('sacar');return flowView();};
 MVIEWS.produccion=()=>MVIEWS.cargar();
 MVIEWS.entregas=()=>MVIEWS.sacar();
 
